@@ -1,0 +1,1563 @@
+--- FILE: SDD_Template_HealthAI_EN (1).docx ---
+Software Design Document
+(SDD)
+Project Name
+HEALTH AI Co-Creation & Innovation Platform
+Course
+[Course Name and Code]
+Group No / Name
+[Group number or name]
+Group Members
+[Full Name – Student ID]
+Submission Date
+[DD/MM/YYYY]
+Version
+1.0
+Revision History
+Date
+Version
+Change Description
+Author
+[DD/MM/YYYY]
+1.0
+Initial version
+[Full Name]
+ 
+ 
+ 
+ 
+Table of Contents
+Table of Contents2
+1. Introduction3
+1.1 Purpose3
+1.2 Scope3
+1.3 Reference Documents3
+1.4 Definitions and Abbreviations3
+2. Architectural Design3
+2.1 Architectural Overview3
+2.2 Layers3
+2.3 Deployment Diagram3
+3. Component Design3
+3.1 Component List3
+3.2 Component Interaction Diagram4
+4. Database Design4
+4.1 ER Diagram4
+4.2 Table Definitions4
+4.2.1 users4
+4.2.2 posts4
+4.2.3 meeting_requests5
+4.2.4 activity_logs5
+5. API Design5
+5.1 Authentication (Auth)5
+5.2 Post Management (Posts)5
+5.3 Meeting Requests (Meetings)6
+5.4 Admin6
+6. UI Design6
+6.1 Screen List and Navigation6
+6.2 Wireframes / Mockups6
+7. Security Design6
+8. State Diagrams7
+8.1 Post Lifecycle7
+8.2 Meeting Request Lifecycle7
+9. SRS–SDD Traceability Matrix7
+10. Appendices (Optional)7
+(Right-click and select “Update Field” in Word to refresh)
+1. Introduction
+1.1 Purpose
+Briefly describe the purpose of this SDD. State how the requirements defined in the SRS will be addressed at the architectural and design level.
+1.2 Scope
+Summarize what the design covers. Must be consistent with the SRS.
+1.3 Reference Documents
+Reference your SRS document (version, date) and the project brief.
+1.4 Definitions and Abbreviations
+Add technical terms specific to the SDD. Examples: API, REST, JWT, ORM, MVC, RBAC, etc.
+2. Architectural Design
+2.1 Architectural Overview
+Describe the overall architectural structure of the system. State which architectural pattern you are using (MVC, Layered, Client-Server, etc.). An architectural diagram is expected.
+2.2 Layers
+Describe the layered structure of the system by filling in the table below.
+Layer
+Responsibility
+Technology Choice
+Presentation
+[User interface, page rendering]
+[React / Vue / Angular / ...]
+Business Logic
+[Rules, workflows, validation]
+[Node.js / Spring / Django / ...]
+Data Access
+[Database operations, ORM]
+[TypeORM / Prisma / Hibernate / ...]
+Database
+[Data storage]
+[PostgreSQL / MySQL / MongoDB / ...]
+2.3 Deployment Diagram
+Include a diagram showing how the system will be deployed in a physical/cloud environment. Example: Frontend (Vercel/Netlify), Backend (Heroku/AWS), Database (Managed DB), Email service. A simple box diagram is sufficient.
+3. Component Design
+Define the main components (modules/services) of the system and the responsibility of each. Including a component diagram is recommended.
+3.1 Component List
+Component
+Responsibility
+Technology / Notes
+AuthModule
+[Registration, login, email verification, session management]
+[Technology]
+PostModule
+[Post CRUD, lifecycle management, filtering]
+[Technology]
+MatchingModule
+[Search, filtering, city-based matching]
+[Technology]
+MeetingModule
+[Meeting request, time proposal, NDA acceptance]
+[Technology]
+AdminModule
+[User/post management, statistics]
+[Technology]
+AuditModule
+[Activity logging, log querying, CSV export]
+[Technology]
+NotificationModule
+[Email notifications, in-app notifications]
+[Technology]
+3.2 Component Interaction Diagram
+Include a diagram showing how the components communicate with each other. Show which component calls which using arrows/lines.
+4. Database Design
+4.1 ER Diagram
+Include an ER diagram showing the relationships between database entities.
+4.2 Table Definitions
+Define the fields, data types, and constraints for each table in the format below.
+4.2.1 users
+Field Name
+Data Type
+Required
+Constraint
+Description
+id
+UUID / INT
+Yes
+PK
+Unique user identifier
+email
+VARCHAR(255)
+Yes
+UNIQUE, .edu check
+Institutional email
+password_hash
+VARCHAR(255)
+Yes
+—
+Encrypted password
+role
+ENUM
+Yes
+—
+engineer / healthcare / admin
+[other fields]
+[...]
+[...]
+[...]
+[...]
+ 
+4.2.2 posts
+Field Name
+Data Type
+Required
+Constraint
+Description
+id
+UUID / INT
+Yes
+PK
+Unique post identifier
+user_id
+UUID / INT
+Yes
+FK → users
+User who created the post
+status
+ENUM
+Yes
+—
+draft / active / meeting_scheduled / closed / expired
+[other fields]
+[...]
+[...]
+[...]
+[...]
+ 
+4.2.3 meeting_requests
+Field Name
+Data Type
+Required
+Constraint
+Description
+id
+UUID / INT
+Yes
+PK
+Meeting request identifier
+post_id
+UUID / INT
+Yes
+FK → posts
+Related post
+requester_id
+UUID / INT
+Yes
+FK → users
+Requesting user
+[other fields]
+[...]
+[...]
+[...]
+[...]
+ 
+4.2.4 activity_logs
+Field Name
+Data Type
+Required
+Constraint
+Description
+id
+UUID / INT
+Yes
+PK
+Log entry identifier
+user_id
+UUID / INT
+Yes
+FK → users
+User who performed the action
+action_type
+VARCHAR(100)
+Yes
+—
+login / post_create / meeting_request / ...
+[other fields]
+[...]
+[...]
+[...]
+[...]
+Must be consistent with the data model in your SRS. Add additional tables (notifications, nda_acceptances, etc.) as needed.
+5. API Design
+Define the backend API endpoints in RESTful format. For each endpoint, specify the HTTP method, URL, description, required authorization, and SRS requirement reference.
+5.1 Authentication (Auth)
+Method
+Endpoint
+Description
+Auth
+SRS Ref.
+POST
+/api/auth/register
+New user registration
+Public
+FR-01
+POST
+/api/auth/login
+User login
+Public
+FR-02
+POST
+/api/auth/verify-email
+Email verification
+Public
+FR-02
+POST
+/api/auth/logout
+End session
+Authenticated
+—
+ 
+5.2 Post Management (Posts)
+Method
+Endpoint
+Description
+Auth
+SRS Ref.
+GET
+/api/posts
+List all posts (with filters)
+Authenticated
+FR-20
+POST
+/api/posts
+Create a new post
+Authenticated
+FR-10
+GET
+/api/posts/:id
+Get post details
+Authenticated
+—
+PUT
+/api/posts/:id
+Update a post
+Owner
+FR-11
+PATCH
+/api/posts/:id/status
+Change post status
+Owner
+FR-12
+Create similar tables for other modules: Meeting, Admin, Log endpoints.
+ 
+5.3 Meeting Requests (Meetings)
+Method
+Endpoint
+Description
+Auth
+SRS Ref.
+POST
+/api/meetings
+Send a meeting request
+Authenticated
+FR-30
+[...]
+[...]
+[...]
+[...]
+[...]
+ 
+5.4 Admin
+Method
+Endpoint
+Description
+Auth
+SRS Ref.
+GET
+/api/admin/users
+List all users
+Admin
+FR-40
+[...]
+[...]
+[...]
+[...]
+[...]
+6. UI Design
+6.1 Screen List and Navigation
+List the main screens and describe the transitions between them. Including a navigation flow diagram is recommended.
+Screen
+Description
+Access
+Registration / Login
+[Describe]
+Public
+Dashboard
+[Describe]
+Authenticated
+Create Post
+[Describe]
+Authenticated
+Post Detail
+[Describe]
+Authenticated
+Meeting Request
+[Describe]
+Authenticated
+Admin Panel
+[Describe]
+Admin
+[Add more]
+[...]
+[...]
+6.2 Wireframes / Mockups
+Include wireframes or mockups for at least 3–4 key screens. You can use hand drawings, Figma, Balsamiq, or similar tools. Suggested screens: Registration page, Dashboard (post list), Post creation form, Post detail + meeting request.
+7. Security Design
+Explain how the security and GDPR requirements from the SRS will be addressed at the design level.
+Security Requirement
+Design Decision
+SRS Ref.
+Authentication
+[JWT / Session-based / OAuth? Explain]
+NFR-xx
+Password storage
+[bcrypt / argon2? Explain]
+NFR-xx
+Authorization (RBAC)
+[Describe the middleware/guard structure]
+FR-03
+Session management
+[Timeout duration, token refresh, etc.]
+NFR-xx
+GDPR compliance
+[Account deletion, data export mechanism]
+NFR-xx
+Rate limiting
+[Configuration details]
+NFR-xx
+[Add more]
+[...]
+[...]
+8. State Diagrams
+8.1 Post Lifecycle
+Include a state diagram showing the post states defined in the brief (Draft → Active → Meeting Scheduled → Partner Found / Expired). Specify which event triggers each transition.
+Draft → Active
+[Which event? E.g.: User clicks “Publish” button]
+Active → Meeting Scheduled
+[Which event?]
+Meeting Scheduled → Partner Found
+[Which event?]
+Active → Expired
+[Which event?]
+[Other transitions]
+[Describe]
+A visual state diagram is expected in addition to this table.
+8.2 Meeting Request Lifecycle
+Include a diagram showing the meeting request states (Pending → Accepted / Declined → Scheduled → Completed / Cancelled).
+9. SRS–SDD Traceability Matrix
+Show which SDD section/component/API addresses each SRS requirement. Ensure all functional requirements are covered.
+SRS Ref.
+Requirement Summary
+SDD Component
+SDD Section
+FR-01
+.edu email restriction
+AuthModule
+Section 3.1, 5.1
+FR-10
+Post creation
+PostModule
+Section 3.1, 5.2
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+==================================================
+
+--- FILE: SENG384_Lab_Schedule.docx ---
+SENG 384 
+Software Project III
+Weekly Schedule
+Date
+Topic
+Content
+Deliverable
+19.02.2026
+Introduction
+26.02.2026
+Project Definition
+(+2 pt. from Attendance)
+Group and GitHub Info Submission
+05.03.2026
+Lab Tutorial (will be shared from Webonline about web development and Docker)
+12.03.2026
+Labwork (Q/A)
+Web Development, Docker
+HW (Individual)
+19.03.2026
+HOLIDAY
+26.03.2026
+Lab Evaluation *
+Web Development, Docker
+QUIZ-1
+02.04.2026
+09.04.2026
+Project_V1 + SRS_V1
+16.04.2026
+23.04.2026
+HOLIDAY
+Project_V2 (Full Stack Integration)  + SDD_V1 
+30.04.2026
+07.05.2026
+Project_V3 (Final Submission) + Project Report (SRS_V2, SDD_V2,User Guide) + Offline (Video Presentation)
+14.05.2026
+Project Evaluation *
+Project
+QUIZ-2
+21.05.2026
+Demo Day (Only chosen teams)
+* Participation is required for these weeks.
+Grading Criteria
+Assessment
+Weight
+Type
+Homework (Coding - Github Repo)
+%20
+Individual
+Lab Evaluation
+%20
+Individual
+Final Evaluation
+%30
+Group
+Project Submissions (SRS, SDD, Coding)
+%30
+Group
+Important Notes
+It is mandatory to mention your AI use cases in the report.
+In case of detection of inappropriate situations, a direct penalty of 30 points. A penalty will be applied — 0 points for serious non-compliance.
+All group members are responsible for the entire project.
+All code submissions will be hosted on GitHub. SRS, SDD, and the Final Report will be submitted via WebOnline.
+Regular commits are expected to be pushed to the GitHub repository at every meaningful development step.
+Project Flow
+1. STEP : Frontend + SRS
+Screens are completed. Not just the design — the frontend must be able to handle at least mock requests coming from the backend 
+2. STEP : Full Stack Integration + SDD
+The SDD document is prepared; database and web service connections are completed. The core skeleton of the application takes shape. A complete backend–data–frontend flow must be established.
+3. STEP : Final Submission + User Guide + Presentation Video (max. 5 minutes)
+The project is finalized. A project report is created by incorporating a User Guide alongside the updated versions of the SRS and SDD documents, and the demo video is uploaded.
+Related Documents 
+SRS Example for Health AI Project 
+SDD Example for Health AI Project 
+User Guide Example for Health AI Project 
+
+==================================================
+
+--- FILE: SRS_Template_HealthAI_EN (1).docx ---
+Software Requirements Specification
+(SRS)
+Project Name
+HEALTH AI Co-Creation & Innovation Platform
+Course
+[Course Name and Code]
+Group No / Name
+[Group number or name]
+Group Members
+[Full Name – Student ID]
+Submission Date
+[DD/MM/YYYY]
+Version
+1.0
+Revision History
+Date
+Version
+Change Description
+Author
+[DD/MM/YYYY]
+1.0
+Initial version
+[Full Name]
+ 
+ 
+ 
+ 
+Table of Contents
+Table of Contents2
+1. Introduction3
+1.1 Purpose3
+1.2 Scope3
+1.3 Definitions and Abbreviations3
+1.4 Intended Audience3
+2. Overall Description3
+2.1 Product Perspective3
+2.2 User Roles3
+2.3 Assumptions and Dependencies3
+2.4 Constraints3
+3. Functional Requirements3
+3.1 User Registration & Access Control4
+3.2 Post Management4
+3.3 Search & Matching4
+3.4 Meeting Request Workflow4
+3.5 Administrative Dashboard4
+3.6 Activity Logging & Audit Trail4
+4. Non-Functional Requirements4
+5. Use Cases5
+5.1 UC-01: Engineer Creates a Post5
+5.2 UC-02: [Use Case Name]5
+5.3 UC-03: [Use Case Name]5
+6. Data Model6
+7. Interface Requirements6
+7.1 User Interface (UI)6
+7.2 External System Interfaces6
+8. Requirements Traceability Matrix6
+9. Appendices 6
+(Right-click and select “Update Field” in Word to refresh)
+1. Introduction
+1.1 Purpose
+Briefly describe the purpose of this document. State which system this SRS is being prepared for.
+1.2 Scope
+Summarize what the system does and what it does not do in 2–3 sentences. For example: “The platform enables structured partner discovery between healthcare professionals and engineers. It does not provide financial transactions, contract management, or medical advice.”
+1.3 Definitions and Abbreviations
+Define the technical terms and abbreviations used in this document. Examples: SRS, RBAC, GDPR, NDA, WCAG, etc.
+1.4 Intended Audience
+Identify who will read this document (development team, course instructor, etc.).
+2. Overall Description
+2.1 Product Perspective
+Explain the need that the system addresses and the problem in current processes. Refer to the “Project Purpose” section of the project brief.
+2.2 User Roles
+Describe the user roles in the system and the key responsibilities of each.
+Role
+Description
+Key Permissions
+Engineer
+[Describe]
+[List permissions]
+Healthcare Professional
+[Describe]
+[List permissions]
+Admin
+[Describe]
+[List permissions]
+2.3 Assumptions and Dependencies
+List your assumptions about the system and external dependencies. Example: “It is assumed that users have an institutional .edu email address.”
+2.4 Constraints
+State the factors that constrain the system design. Example: No patient data is stored, no file uploads, meetings take place externally.
+3. Functional Requirements
+Define each functional requirement with a unique ID. Use High / Medium / Low for priority. Reference the relevant project brief section in the Source column.
+3.1 User Registration & Access Control
+ID
+Requirement Description
+Priority
+Source
+FR-01
+The system shall only allow registration with institutional .edu email addresses.
+High
+Brief 4.1
+FR-02
+The system shall implement an email verification mechanism.
+High
+Brief 4.1
+FR-03
+The user shall be able to select a role during registration (Engineer / Healthcare Professional / Admin).
+High
+Brief 4.1
+FR-04
+[Add your own requirements]
+[...]
+[...]
+3.2 Post Management
+ID
+Requirement Description
+Priority
+Source
+FR-10
+[Write requirement]
+[...]
+Brief 4.2
+FR-11
+[Write requirement]
+[...]
+Brief 4.2
+FR-12
+[Write requirement]
+[...]
+Brief 4.2
+Carefully review section 4.2 of the brief to cover all post management requirements. Do not forget the post lifecycle states (Draft, Active, Meeting Scheduled, Partner Found, Expired).
+3.3 Search & Matching
+ID
+Requirement Description
+Priority
+Source
+FR-20
+[Write requirement]
+[...]
+Brief 4.3
+FR-21
+[Write requirement]
+[...]
+Brief 4.3
+3.4 Meeting Request Workflow
+ID
+Requirement Description
+Priority
+Source
+FR-30
+[Write requirement]
+[...]
+Brief 4.4
+FR-31
+[Write requirement]
+[...]
+Brief 4.4
+3.5 Administrative Dashboard
+ID
+Requirement Description
+Priority
+Source
+FR-40
+[Write requirement]
+[...]
+Brief 4.5
+FR-41
+[Write requirement]
+[...]
+Brief 4.5
+3.6 Activity Logging & Audit Trail
+ID
+Requirement Description
+Priority
+Source
+FR-50
+[Write requirement]
+[...]
+Brief 4.6
+FR-51
+[Write requirement]
+[...]
+Brief 4.6
+4. Non-Functional Requirements
+Define the requirements from section 5 of the brief with concrete and measurable metrics.
+ID
+Requirement
+Metric / Target
+Category
+NFR-01
+Search results shall be returned within a specified time.
+< 1.5 seconds
+Performance
+NFR-02
+Page load time shall be limited.
+< 3 seconds
+Performance
+NFR-03
+[Write requirement]
+[Target]
+[Category]
+NFR-04
+[Write requirement]
+[Target]
+[Category]
+NFR-05
+[Write requirement]
+[Target]
+[Category]
+Categories: Performance, Security, GDPR/Privacy, Usability, Accessibility. Cover all of sections 5.1–5.4 of the brief.
+5. Use Cases
+Write at least 3–4 core use cases. Use the format below. Base them on the flows described in sections 3.1 and 3.2 of the brief.
+5.1 UC-01: Engineer Creates a Post
+Name
+UC-01: Engineer Creates a Post
+Actor(s)
+Engineer
+Precondition
+The engineer must be logged in.
+Main Flow
+1. The engineer clicks the “New Post” button. 2. Fills in the required fields (domain, description, required expertise, etc.). 3. Clicks the “Publish” button. 4. The system publishes the post with “Active” status.
+Postcondition
+The post is saved and visible to other users.
+Alternative Flow
+2a. If a required field is left blank, the system displays an error message.
+ 
+5.2 UC-02: [Use Case Name]
+Name
+UC-02: [Use Case Name]
+Actor(s)
+[Actor]
+Precondition
+[Write]
+Main Flow
+[Write steps]
+Postcondition
+[Write]
+Alternative Flow
+[Write]
+ 
+5.3 UC-03: [Use Case Name]
+Name
+UC-03: [Use Case Name]
+Actor(s)
+[Actor]
+Precondition
+[Write]
+Main Flow
+[Write steps]
+Postcondition
+[Write]
+Alternative Flow
+[Write]
+ 
+Add more use cases as needed (UC-04, UC-05, ...). Consider scenarios such as meeting request, admin removing a post, marking partner found.
+6. Data Model
+Show the core data entities of the system and their relationships. You can present this as a simple ER diagram or in table format. Example entities: User, Post, MeetingRequest, ActivityLog.
+Entity
+Key Fields
+Relationships
+User
+[List fields]
+[Write]
+Post
+[List fields]
+[Write]
+MeetingRequest
+[List fields]
+[Write]
+ActivityLog
+[List fields]
+[Write]
+You are encouraged to include a simple ER diagram (visual) in addition to this table.
+7. Interface Requirements
+7.1 User Interface (UI)
+Briefly describe the main screens and page structure. Examples: Registration page, Dashboard, Post creation form, Post detail page, Meeting request screen, Admin panel. Including wireframes or simple screen mockups is recommended.
+7.2 External System Interfaces
+Specify the external services the system will interact with. Example: Email service (for verification), external meeting platforms (Zoom/Teams – link sharing only).
+8. Requirements Traceability Matrix
+Show the source of each requirement in the project brief and which use case it relates to. Ensure all requirements are covered.
+Req. ID
+Requirement Summary
+Source (Brief)
+Related Use Case
+FR-01
+.edu email restriction
+Brief 4.1
+UC-01, UC-02
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+9. Appendices 
+• Use Case Diagram
+• Wireframe / Mockup images
+• ER Diagram
+
+==================================================
+
+--- FILE: SRS_Template_HealthAI_EN.docx ---
+Software Requirements Specification
+(SRS)
+Project Name
+HEALTH AI Co-Creation & Innovation Platform
+Course
+[Course Name and Code]
+Group No / Name
+[Group number or name]
+Group Members
+[Full Name – Student ID]
+Submission Date
+[DD/MM/YYYY]
+Version
+1.0
+Revision History
+Date
+Version
+Change Description
+Author
+[DD/MM/YYYY]
+1.0
+Initial version
+[Full Name]
+ 
+ 
+ 
+ 
+Table of Contents
+Table of Contents2
+1. Introduction3
+1.1 Purpose3
+1.2 Scope3
+1.3 Definitions and Abbreviations3
+1.4 Intended Audience3
+2. Overall Description3
+2.1 Product Perspective3
+2.2 User Roles3
+2.3 Assumptions and Dependencies3
+2.4 Constraints3
+3. Functional Requirements3
+3.1 User Registration & Access Control4
+3.2 Post Management4
+3.3 Search & Matching4
+3.4 Meeting Request Workflow4
+3.5 Administrative Dashboard4
+3.6 Activity Logging & Audit Trail4
+4. Non-Functional Requirements4
+5. Use Cases5
+5.1 UC-01: Engineer Creates a Post5
+5.2 UC-02: [Use Case Name]5
+5.3 UC-03: [Use Case Name]5
+6. Data Model6
+7. Interface Requirements6
+7.1 User Interface (UI)6
+7.2 External System Interfaces6
+8. Requirements Traceability Matrix6
+9. Appendices 6
+(Right-click and select “Update Field” in Word to refresh)
+1. Introduction
+1.1 Purpose
+Briefly describe the purpose of this document. State which system this SRS is being prepared for.
+1.2 Scope
+Summarize what the system does and what it does not do in 2–3 sentences. For example: “The platform enables structured partner discovery between healthcare professionals and engineers. It does not provide financial transactions, contract management, or medical advice.”
+1.3 Definitions and Abbreviations
+Define the technical terms and abbreviations used in this document. Examples: SRS, RBAC, GDPR, NDA, WCAG, etc.
+1.4 Intended Audience
+Identify who will read this document (development team, course instructor, etc.).
+2. Overall Description
+2.1 Product Perspective
+Explain the need that the system addresses and the problem in current processes. Refer to the “Project Purpose” section of the project brief.
+2.2 User Roles
+Describe the user roles in the system and the key responsibilities of each.
+Role
+Description
+Key Permissions
+Engineer
+[Describe]
+[List permissions]
+Healthcare Professional
+[Describe]
+[List permissions]
+Admin
+[Describe]
+[List permissions]
+2.3 Assumptions and Dependencies
+List your assumptions about the system and external dependencies. Example: “It is assumed that users have an institutional .edu email address.”
+2.4 Constraints
+State the factors that constrain the system design. Example: No patient data is stored, no file uploads, meetings take place externally.
+3. Functional Requirements
+Define each functional requirement with a unique ID. Use High / Medium / Low for priority. Reference the relevant project brief section in the Source column.
+3.1 User Registration & Access Control
+ID
+Requirement Description
+Priority
+Source
+FR-01
+The system shall only allow registration with institutional .edu email addresses.
+High
+Brief 4.1
+FR-02
+The system shall implement an email verification mechanism.
+High
+Brief 4.1
+FR-03
+The user shall be able to select a role during registration (Engineer / Healthcare Professional / Admin).
+High
+Brief 4.1
+FR-04
+[Add your own requirements]
+[...]
+[...]
+3.2 Post Management
+ID
+Requirement Description
+Priority
+Source
+FR-10
+[Write requirement]
+[...]
+Brief 4.2
+FR-11
+[Write requirement]
+[...]
+Brief 4.2
+FR-12
+[Write requirement]
+[...]
+Brief 4.2
+Carefully review section 4.2 of the brief to cover all post management requirements. Do not forget the post lifecycle states (Draft, Active, Meeting Scheduled, Partner Found, Expired).
+3.3 Search & Matching
+ID
+Requirement Description
+Priority
+Source
+FR-20
+[Write requirement]
+[...]
+Brief 4.3
+FR-21
+[Write requirement]
+[...]
+Brief 4.3
+3.4 Meeting Request Workflow
+ID
+Requirement Description
+Priority
+Source
+FR-30
+[Write requirement]
+[...]
+Brief 4.4
+FR-31
+[Write requirement]
+[...]
+Brief 4.4
+3.5 Administrative Dashboard
+ID
+Requirement Description
+Priority
+Source
+FR-40
+[Write requirement]
+[...]
+Brief 4.5
+FR-41
+[Write requirement]
+[...]
+Brief 4.5
+3.6 Activity Logging & Audit Trail
+ID
+Requirement Description
+Priority
+Source
+FR-50
+[Write requirement]
+[...]
+Brief 4.6
+FR-51
+[Write requirement]
+[...]
+Brief 4.6
+4. Non-Functional Requirements
+Define the requirements from section 5 of the brief with concrete and measurable metrics.
+ID
+Requirement
+Metric / Target
+Category
+NFR-01
+Search results shall be returned within a specified time.
+< 1.5 seconds
+Performance
+NFR-02
+Page load time shall be limited.
+< 3 seconds
+Performance
+NFR-03
+[Write requirement]
+[Target]
+[Category]
+NFR-04
+[Write requirement]
+[Target]
+[Category]
+NFR-05
+[Write requirement]
+[Target]
+[Category]
+Categories: Performance, Security, GDPR/Privacy, Usability, Accessibility. Cover all of sections 5.1–5.4 of the brief.
+5. Use Cases
+Write at least 3–4 core use cases. Use the format below. Base them on the flows described in sections 3.1 and 3.2 of the brief.
+5.1 UC-01: Engineer Creates a Post
+Name
+UC-01: Engineer Creates a Post
+Actor(s)
+Engineer
+Precondition
+The engineer must be logged in.
+Main Flow
+1. The engineer clicks the “New Post” button. 2. Fills in the required fields (domain, description, required expertise, etc.). 3. Clicks the “Publish” button. 4. The system publishes the post with “Active” status.
+Postcondition
+The post is saved and visible to other users.
+Alternative Flow
+2a. If a required field is left blank, the system displays an error message.
+ 
+5.2 UC-02: [Use Case Name]
+Name
+UC-02: [Use Case Name]
+Actor(s)
+[Actor]
+Precondition
+[Write]
+Main Flow
+[Write steps]
+Postcondition
+[Write]
+Alternative Flow
+[Write]
+ 
+5.3 UC-03: [Use Case Name]
+Name
+UC-03: [Use Case Name]
+Actor(s)
+[Actor]
+Precondition
+[Write]
+Main Flow
+[Write steps]
+Postcondition
+[Write]
+Alternative Flow
+[Write]
+ 
+Add more use cases as needed (UC-04, UC-05, ...). Consider scenarios such as meeting request, admin removing a post, marking partner found.
+6. Data Model
+Show the core data entities of the system and their relationships. You can present this as a simple ER diagram or in table format. Example entities: User, Post, MeetingRequest, ActivityLog.
+Entity
+Key Fields
+Relationships
+User
+[List fields]
+[Write]
+Post
+[List fields]
+[Write]
+MeetingRequest
+[List fields]
+[Write]
+ActivityLog
+[List fields]
+[Write]
+You are encouraged to include a simple ER diagram (visual) in addition to this table.
+7. Interface Requirements
+7.1 User Interface (UI)
+Briefly describe the main screens and page structure. Examples: Registration page, Dashboard, Post creation form, Post detail page, Meeting request screen, Admin panel. Including wireframes or simple screen mockups is recommended.
+7.2 External System Interfaces
+Specify the external services the system will interact with. Example: Email service (for verification), external meeting platforms (Zoom/Teams – link sharing only).
+8. Requirements Traceability Matrix
+Show the source of each requirement in the project brief and which use case it relates to. Ensure all requirements are covered.
+Req. ID
+Requirement Summary
+Source (Brief)
+Related Use Case
+FR-01
+.edu email restriction
+Brief 4.1
+UC-01, UC-02
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+9. Appendices 
+• Use Case Diagram
+• Wireframe / Mockup images
+• ER Diagram
+
+==================================================
+
+--- FILE: UserGuide_Template_HealthAI_EN (1).docx ---
+User Guide
+HEALTH AI Co-Creation & Innovation Platform
+Project Name
+HEALTH AI Co-Creation & Innovation Platform
+Course
+[Course Name and Code]
+Group No / Name
+[Group number or name]
+Group Members
+[Full Name – Student ID]
+Submission Date
+30/04/2026
+Version
+1.0
+Revision History
+Date
+Version
+Change Description
+Author
+[DD/MM/YYYY]
+1.0
+Initial version
+[Full Name]
+ 
+ 
+ 
+ 
+Table of Contents
+Table of Contents2
+1. Introduction3
+1.1 Document Purpose3
+1.2 Target Audience3
+1.3 Platform Overview3
+1.4 System Requirements3
+2. Getting Started3
+2.1 Registration3
+2.2 Login4
+2.3 Dashboard Overview4
+3. Post Management4
+3.1 Creating a New Post4
+3.2 Post Form Fields4
+3.3 Editing a Post4
+3.4 Post Status Guide5
+3.5 Marking Partner Found5
+4. Search & Partner Discovery5
+4.1 Browsing Posts5
+4.2 Filtering Options5
+4.3 City-Based Matching5
+5. Meeting Request Process6
+5.1 Expressing Interest6
+5.2 NDA Acceptance6
+5.3 Proposing & Accepting Time Slots6
+5.4 After the Meeting6
+6. Profile Management6
+6.1 Editing Your Profile6
+6.2 Deleting Your Account (GDPR)6
+6.3 Exporting Your Data7
+7. Admin Panel7
+7.1 Post Management7
+7.2 User Management7
+7.3 Activity Logs & Statistics7
+8. Notifications8
+9. Frequently Asked Questions (FAQ)8
+10. Troubleshooting8
+11. Contact & Support9
+12. Appendices (Optional)9
+(Right-click and select “Update Field” in Word to refresh)
+1. Introduction
+1.1 Document Purpose
+Describe the purpose of this User Guide. State that it provides step-by-step instructions for all user roles to effectively use the HEALTH AI platform.
+1.2 Target Audience
+User Role
+Description
+Relevant Sections
+Engineer
+Creates posts, searches for healthcare partners
+Sections 2–6, 8
+Healthcare Professional
+Browses posts, sends meeting requests
+Sections 2–6, 8
+Admin
+Manages users, posts, and views system logs
+Sections 2, 7
+1.3 Platform Overview
+Provide a brief (3–4 sentence) overview of the platform: what it does, who it’s for, and the core workflow.
+1.4 System Requirements
+Requirement
+Details
+Web Browser
+Google Chrome (latest), Firefox (latest), Edge (latest), Safari (latest)
+Internet Connection
+Stable broadband connection required
+Screen Resolution
+Minimum 1280×720, recommended 1920×1080
+Email
+A valid institutional .edu email address is required for registration
+2. Getting Started
+2.1 Registration
+Step
+Description
+Screenshot
+1
+Navigate to the HEALTH AI platform URL in your web browser.
+[Insert screenshot]
+2
+Click the “Register” button on the homepage.
+[Insert screenshot]
+3
+Enter your institutional .edu email address and choose a strong password.
+[Insert screenshot]
+4
+Select your role: Engineer or Healthcare Professional.
+[Insert screenshot]
+5
+Click “Register”. A verification email will be sent to your address.
+[Insert screenshot]
+6
+Open the verification email and click the confirmation link.
+[Insert screenshot]
+ 
+2.2 Login
+Step
+Description
+Screenshot
+1
+Navigate to the HEALTH AI platform URL.
+[Insert screenshot]
+2
+Enter your email address and password.
+[Insert screenshot]
+3
+Click “Login”. You will be redirected to your Dashboard.
+[Insert screenshot]
+ 
+2.3 Dashboard Overview
+Describe the main dashboard page that users see after login. Explain the key areas: navigation menu, post list/feed, notifications indicator, profile access. Include a screenshot.
+3. Post Management
+3.1 Creating a New Post
+Step
+Description
+Screenshot
+1
+Click the “New Post” button on the Dashboard.
+[Insert screenshot]
+2
+Fill in all required fields in the post creation form (see field guide below).
+[Insert screenshot]
+3
+Choose whether to save as Draft or Publish immediately.
+[Insert screenshot]
+4
+Click “Save” or “Publish”.
+[Insert screenshot]
+5
+Your post will appear on the Dashboard with the appropriate status.
+[Insert screenshot]
+ 
+3.2 Post Form Fields
+Field
+Description
+Example
+Title
+A clear and descriptive title for your collaboration post
+"AI-Assisted Cardiology Diagnosis"
+Working Domain
+The medical or engineering domain of the project
+Cardiology, Radiology, Orthopedics
+Required Expertise
+The type of expertise you are looking for in a partner
+"Machine Learning Engineer"
+Project Stage
+Current stage of the project
+Idea / Prototype / Research
+Confidentiality Level
+How sensitive is the project content?
+Public / Confidential
+City
+Your location for city-based matching
+Ankara, Istanbul, Izmir
+Description
+Detailed description of the collaboration opportunity
+[Free text]
+ 
+3.3 Editing a Post
+Step
+Description
+Screenshot
+1
+Navigate to your post (from Dashboard or “My Posts”).
+[Insert screenshot]
+2
+Click the “Edit” button.
+[Insert screenshot]
+3
+Modify the desired fields and click “Save”.
+[Insert screenshot]
+ 
+3.4 Post Status Guide
+Explain each post status and what it means for the user.
+Status
+Meaning
+Visual Indicator
+Draft
+Post is saved but not visible to other users
+[Gray badge]
+Active
+Post is published and visible. Other users can express interest.
+[Green badge]
+Meeting Scheduled
+A meeting has been scheduled with an interested partner
+[Blue badge]
+Partner Found
+A collaboration partner has been found. Post is closed.
+[Purple badge]
+Expired
+Post has expired due to inactivity or time limit
+[Red badge]
+ 
+3.5 Marking Partner Found
+Step
+Description
+Screenshot
+1
+Open the post for which you found a partner.
+[Insert screenshot]
+2
+Click the “Mark as Partner Found” button.
+[Insert screenshot]
+3
+Confirm the action. The post status will change to “Partner Found” and will no longer accept new interest.
+[Insert screenshot]
+4. Search & Partner Discovery
+4.1 Browsing Posts
+Explain how users can browse the post feed, view post cards, and click for details.
+4.2 Filtering Options
+Describe the available filters and how to use them.
+Filter
+Description
+Domain
+Filter by medical or engineering domain (e.g., Cardiology, AI, Biomedical)
+City
+Filter by location for city-based matching
+Status
+Show only Active, Draft (own posts), or all statuses
+Required Expertise
+Filter by the type of expertise being sought
+[Add more]
+[...]
+4.3 City-Based Matching
+Explain how the city-based matching feature works to connect users in the same geographic area.
+5. Meeting Request Process
+5.1 Expressing Interest
+Step
+Description
+Screenshot
+1
+Open the post detail page of a post you are interested in.
+[Insert screenshot]
+2
+Click the “Express Interest” or “Request Meeting” button.
+[Insert screenshot]
+3
+Optionally add a message explaining your interest and relevant experience.
+[Insert screenshot]
+ 
+5.2 NDA Acceptance
+Explain the NDA (Non-Disclosure Agreement) acceptance step. If the post has a confidentiality level that requires NDA, the user must accept the NDA terms before proceeding with the meeting request.
+5.3 Proposing & Accepting Time Slots
+Step
+Description
+Screenshot
+1
+Propose available time slots for the meeting (date and time).
+[Insert screenshot]
+2
+The post owner reviews proposed slots and accepts one.
+[Insert screenshot]
+3
+Both parties receive a confirmation notification with the scheduled meeting time.
+[Insert screenshot]
+Note: Meetings take place externally (Zoom, Teams, etc.). The platform does not host meetings.
+5.4 After the Meeting
+Explain what happens after a meeting: the post owner can mark “Partner Found” to close the post, or keep it active to continue searching.
+6. Profile Management
+6.1 Editing Your Profile
+Describe how users can view and edit their profile information (name, institution, expertise, city, etc.).
+6.2 Deleting Your Account (GDPR)
+Step
+Description
+Screenshot
+1
+Navigate to Profile Settings.
+[Insert screenshot]
+2
+Click “Delete Account”.
+[Insert screenshot]
+3
+Read the warning about permanent data deletion.
+[Insert screenshot]
+4
+Confirm by entering your password.
+[Insert screenshot]
+5
+Your account and all associated data will be permanently deleted.
+[Insert screenshot]
+Under GDPR, users have the right to request complete deletion of their personal data.
+6.3 Exporting Your Data
+Describe how users can export their personal data (posts, profile info, meeting history) in a downloadable format.
+7. Admin Panel
+This section is only available to users with the Admin role.
+7.1 Post Management
+Describe how admins can view, filter, and remove posts. Explain the criteria for removing inappropriate posts.
+Step
+Description
+Screenshot
+1
+Navigate to Admin Panel → Posts.
+[Insert screenshot]
+2
+Browse or filter posts by status, domain, or date.
+[Insert screenshot]
+3
+Click on a post to view details.
+[Insert screenshot]
+4
+Use the “Remove Post” button to remove inappropriate content.
+[Insert screenshot]
+ 
+7.2 User Management
+Describe how admins can view, filter, and manage user accounts (list users, filter by role, suspend accounts).
+Step
+Description
+Screenshot
+1
+Navigate to Admin Panel → Users.
+[Insert screenshot]
+2
+Browse or filter users by role, status, or registration date.
+[Insert screenshot]
+3
+Click on a user to view their profile and activity.
+[Insert screenshot]
+4
+Use “Suspend Account” if needed.
+[Insert screenshot]
+ 
+7.3 Activity Logs & Statistics
+Describe how admins can view system activity logs, filter by date/user/action type, and export logs as CSV.
+Step
+Description
+Screenshot
+1
+Navigate to Admin Panel → Logs.
+[Insert screenshot]
+2
+Use filters to narrow down logs (date range, user, action type).
+[Insert screenshot]
+3
+Review the log entries in the table.
+[Insert screenshot]
+4
+Click “Export CSV” to download the filtered logs.
+[Insert screenshot]
+8. Notifications
+Describe the types of notifications users receive and how they are delivered.
+Notification Type
+Description
+Channel
+Interest Received
+Someone expressed interest in your post
+[Email / In-App]
+Meeting Request
+A meeting request has been sent or received
+[Email / In-App]
+Meeting Confirmed
+A meeting time has been accepted by both parties
+[Email / In-App]
+Post Status Changed
+A post you’re involved with changed status
+[In-App]
+Account Activity
+Login from new device, password change, etc.
+[Email]
+[Add more]
+[...]
+[...]
+9. Frequently Asked Questions (FAQ)
+Question
+Answer
+My .edu email is not accepted. What should I do?
+Ensure you are using an institutional email with a .edu or .edu.tr extension. If the issue persists, contact support.
+I didn’t receive the verification email.
+Check your spam/junk folder. You can also click “Resend Verification Email” on the login page.
+Can I edit a published post?
+Yes, you can edit your post at any time while it is in Draft or Active status.
+How do I delete my account and data?
+Go to Profile Settings → Delete Account. This action is permanent and cannot be undone.
+Are meetings held on the platform?
+No. Meetings are conducted on external platforms (Zoom, Teams, etc.). The platform only facilitates scheduling.
+Can I have multiple active posts?
+[Describe the policy on multiple concurrent posts]
+[Add more questions]
+[Add answers]
+10. Troubleshooting
+Problem
+Possible Cause
+Solution
+Page is not loading
+Internet connection issue or server downtime
+Check your connection. Try refreshing the page. If the issue persists, try again later.
+Session closed unexpectedly
+Session timeout or browser cookie issue
+Log in again. Enable cookies in your browser settings.
+Filters return no results
+No posts match the selected criteria
+Try broader filter settings or remove some filters.
+Cannot submit meeting request
+Post may have been closed or you haven’t accepted the NDA
+Refresh the post page and check the NDA acceptance step.
+[Add more]
+[...]
+[...]
+11. Contact & Support
+Channel
+Details
+Email
+[support email address]
+In-Platform Feedback
+Use the “Feedback” button in the footer to submit suggestions or report issues.
+[Add more]
+[...]
+
+==================================================
+
