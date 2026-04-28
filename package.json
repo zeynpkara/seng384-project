@@ -1,0 +1,16 @@
+{
+  "name": "health-ai",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "frontend:dev": "cd frontend && npm run dev",
+    "backend:dev": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
+    "frontend:install": "cd frontend && npm install",
+    "backend:install": "cd backend && npm install",
+    "install:all": "npm run frontend:install && npm run backend:install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

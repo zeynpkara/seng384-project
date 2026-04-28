@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  passwordHash      String
+  role              Role
+  name              String
+  institution       String
+  isVerified        Boolean   @default(false)
+  verificationToken String?
+  isSuspended       Boolean   @default(false)
+  ndaAcceptedAt     DateTime?
+  createdAt         DateTime  @default(now())
+
+  posts                   Post[]
+  meetingRequestsSent     MeetingRequest[] @relation("Requester")
+  meetingRequestsReceived MeetingRequest[] @relation("PostOwner")
+  activityLogs            ActivityLog[]
+}
+
+enum Role {
+  HEALTHCARE
+  ENGINEER
+  ADMIN
+}
+
+model Post {
+  id                String      @id @default(uuid())
+  title             String
+  domain            String
+  description       String
+  requiredExpertise String
+  projectStage      ProjectStage
+  confidentiality   Confidentiality
+  city              String
+  country           String
+  commitmentLevel   String
+  status            PostStatus  @default(DRAFT)
+  expiresAt         DateTime?
+  autoClose         Boolean     @default(false)
+  ownerId           String
+  owner             User        @relation(fields: [ownerId], references: [id])
+  meetingRequests   MeetingRequest[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+enum PostStatus {
+  DRAFT
+  ACTIVE
+  MEETING_SCHEDULED
+  CLOSED
+  EXPIRED
+}
+
+enum ProjectStage {
+  IDEA
+  CONCEPT_VALIDATION
+  PROTOTYPE
+  PILOT_TESTING
+  PRE_DEPLOYMENT
+}
+
+enum Confidentiality {
+  PUBLIC
+  MEETING_ONLY
+}
+
+model MeetingRequest {
+  id            String        @id @default(uuid())
+  postId        String
+  post          Post          @relation(fields: [postId], references: [id])
+  requesterId   String
+  requester     User          @relation("Requester", fields: [requesterId], references: [id])
+  postOwnerId   String
+  postOwner     User          @relation("PostOwner", fields: [postOwnerId], references: [id])
+  status        MeetingStatus @default(PENDING)
+  message       String?
+  ndaAccepted   Boolean       @default(false)
+  ndaAcceptedAt DateTime?
+  proposedSlots Json?
+  confirmedSlot Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+enum MeetingStatus {
+  PENDING
+  NDA_PENDING
+  SLOTS_PROPOSED
+  CONFIRMED
+  REJECTED
+  CANCELLED
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String?
+  entityId  String?
+  ipAddress String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}

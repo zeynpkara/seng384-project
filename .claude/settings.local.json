@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"C:\\\\Users\\\\yusev\\\\OneDrive\\\\Desktop\\\\health-ai\\\\frontend\\\\src\\\\components\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\yusev\\\\OneDrive\\\\Desktop\\\\health-ai\\\\frontend\\\\src\\\\context\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\yusev\\\\OneDrive\\\\Desktop\\\\health-ai\\\\frontend\\\\src\\\\views\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\yusev\\\\OneDrive\\\\Desktop\\\\health-ai\\\\frontend\\\\src\\\\api\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\yusev\\\\OneDrive\\\\Desktop\\\\health-ai\\\\backend\\\\prisma\")",
+      "Bash(npm install *)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(npx tsx --eval ' *)",
+      "Bash(npx tsx *)",
+      "Bash(npx tsx -e ' *)",
+      "Read(//c/Users/yusev/OneDrive/Desktop/health-ai/backend/**)",
+      "Bash(wait %1)",
+      "Bash(node -e ' *)",
+      "Bash(cat .env)",
+      "Bash(ls frontend/)",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "Bash(psql --version)"
+    ]
+  }
+}
