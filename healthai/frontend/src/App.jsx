@@ -7,6 +7,9 @@ const Login = lazy(() => import('@/pages/auth/Login'))
 const Register = lazy(() => import('@/pages/auth/Register'))
 const VerifyEmail = lazy(() => import('@/pages/auth/VerifyEmail'))
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'))
+const HealthcareDashboard = lazy(() => import('@/pages/dashboard/HealthcareDashboard'))
+const EngineerDashboard = lazy(() => import('@/pages/dashboard/EngineerDashboard'))
+const AdminDashboard = lazy(() => import('@/pages/dashboard/AdminDashboard'))
 const CreatePost = lazy(() => import('@/pages/posts/CreatePost'))
 const PostDetail = lazy(() => import('@/pages/posts/PostDetail'))
 const MyPosts = lazy(() => import('@/pages/posts/MyPosts'))
@@ -32,11 +35,16 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
           <Route element={<PublicOnlyRoute />}>
-            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
           </Route>
           <Route path="/verify-email" element={<VerifyEmail />} />
+
+          {/* Demo role dashboards — no auth required */}
+          <Route path="/dashboard/healthcare" element={<HealthcareDashboard />} />
+          <Route path="/dashboard/engineer" element={<EngineerDashboard />} />
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
 
           {/* Authenticated */}
           <Route element={<ProtectedRoute />}>

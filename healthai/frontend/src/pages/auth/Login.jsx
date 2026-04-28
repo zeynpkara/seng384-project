@@ -1,35 +1,49 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Activity, Eye, EyeOff, Loader2 } from 'lucide-react'
-import { authService } from '@/services/authService'
-import useAuthStore from '@/store/authStore'
+import { useNavigate } from 'react-router-dom'
+import { Activity, Heart, Cpu, Shield, ChevronRight } from 'lucide-react'
+
+const ROLES = [
+  {
+    id: 'healthcare',
+    label: 'Healthcare',
+    sublabel: 'Sağlık Profesyoneli',
+    icon: Heart,
+    description: 'İlan oluşturun, toplantı isteklerini yönetin',
+    iconColor: 'text-green-600 dark:text-green-400',
+    iconBg: 'bg-green-50 dark:bg-green-900/20',
+    cardBg: 'bg-green-50/50 dark:bg-green-900/10',
+    border: 'border-green-200 dark:border-green-800',
+    href: '/dashboard/healthcare',
+  },
+  {
+    id: 'engineer',
+    label: 'Engineer',
+    sublabel: 'Mühendis',
+    icon: Cpu,
+    description: 'İlanları keşfedin, projelere başvurun',
+    iconColor: 'text-blue-600 dark:text-blue-400',
+    iconBg: 'bg-blue-50 dark:bg-blue-900/20',
+    cardBg: 'bg-blue-50/50 dark:bg-blue-900/10',
+    border: 'border-blue-200 dark:border-blue-800',
+    href: '/dashboard/engineer',
+  },
+  {
+    id: 'admin',
+    label: 'Admin',
+    sublabel: 'Yönetici',
+    icon: Shield,
+    description: 'Kullanıcıları ve ilanları yönetin',
+    iconColor: 'text-purple-600 dark:text-purple-400',
+    iconBg: 'bg-purple-50 dark:bg-purple-900/20',
+    cardBg: 'bg-purple-50/50 dark:bg-purple-900/10',
+    border: 'border-purple-200 dark:border-purple-800',
+    href: '/dashboard/admin',
+  },
+]
 
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [showPass, setShowPass] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const { setAuth } = useAuthStore()
+  const [showPicker, setShowPicker] = useState(false)
   const navigate = useNavigate()
-  const location = useLocation()
-  const from = location.state?.from?.pathname || '/dashboard'
-  const registered = new URLSearchParams(location.search).get('registered')
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      const { data: tokenData } = await authService.login(form)
-      const { data: profile } = await authService.getProfile()
-      setAuth(profile, tokenData.access_token)
-      navigate(from, { replace: true })
-    } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid email or password.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
@@ -40,74 +54,51 @@ export default function Login() {
         </div>
 
         <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
-          <h1 className="text-xl font-bold mb-1">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mb-6">Sign in to your account</p>
-
-          {registered && (
-            <div className="mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-sm text-green-600 dark:text-green-400">
-              Account created! Please verify your email before signing in.
-            </div>
-          )}
-
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Email</label>
-              <input
-                type="email"
-                required
-                placeholder="you@university.edu.tr"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Password</label>
-              <div className="relative">
-                <input
-                  type={showPass ? 'text' : 'password'}
-                  required
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-                  className="w-full px-3 py-2 pr-10 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+          {!showPicker ? (
+            <>
+              <h1 className="text-xl font-bold mb-1">Hoş Geldiniz</h1>
+              <p className="text-sm text-muted-foreground mb-8">
+                HEALTH AI platformuna erişmek için giriş yapın.
+              </p>
+              <button
+                onClick={() => setShowPicker(true)}
+                className="w-full py-3 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors"
+              >
+                Giriş Yap
+              </button>
+            </>
+          ) : (
+            <>
+              <h1 className="text-xl font-bold mb-1">Rol Seçin</h1>
+              <p className="text-sm text-muted-foreground mb-6">
+                Devam etmek istediğiniz rolü seçin.
+              </p>
+              <div className="space-y-3">
+                {ROLES.map((role) => (
+                  <button
+                    key={role.id}
+                    onClick={() => navigate(role.href)}
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border ${role.border} ${role.cardBg} hover:opacity-80 transition-all text-left group`}
+                  >
+                    <div className={`h-10 w-10 rounded-lg ${role.iconBg} flex items-center justify-center flex-shrink-0`}>
+                      <role.icon className={`h-5 w-5 ${role.iconColor}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-foreground text-sm">{role.label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{role.description}</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform flex-shrink-0" />
+                  </button>
+                ))}
               </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm hover:bg-primary/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
-            >
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {loading ? 'Signing in…' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary hover:underline font-medium">Register</Link>
-          </div>
-          <div className="mt-2 text-center">
-            <Link to="/verify-email" className="text-xs text-muted-foreground hover:text-foreground">
-              Resend verification email
-            </Link>
-          </div>
+              <button
+                onClick={() => setShowPicker(false)}
+                className="mt-5 w-full text-sm text-muted-foreground hover:text-foreground transition-colors text-center"
+              >
+                ← Geri
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
