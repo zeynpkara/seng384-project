@@ -2,11 +2,14 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
+  secure: process.env.SMTP_SECURE === 'true' || Number(process.env.SMTP_PORT) === 465,
   port: Number(process.env.SMTP_PORT) || 2525,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+  auth: process.env.SMTP_USER
+    ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      }
+    : undefined,
 });
 
 export async function sendVerificationEmail(to: string, token: string): Promise<void> {
@@ -15,7 +18,15 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
   await transporter.sendMail({
     from: process.env.FROM_EMAIL || 'noreply@healthai.edu',
     to,
-    subject: 'HEALTH AI — Verify Your Email',
+    subject: 'HEALTH AI - Verify Your Email',
+    text: [
+      'Welcome to HEALTH AI.',
+      '',
+      'Please verify your institutional email by opening the link below:',
+      link,
+      '',
+      'If you did not create this account, you can ignore this email.',
+    ].join('\n'),
     html: `
       <!DOCTYPE html>
       <html>
@@ -39,13 +50,13 @@ export async function sendVerificationEmail(to: string, token: string): Promise<
                   Or copy this link: <a href="${link}" style="color:#cfbcff;">${link}</a>
                 </p>
                 <p style="margin:16px 0 0;color:rgba(255,255,255,0.2);font-size:11px;">
-                  This link expires in 24 hours. If you did not register, ignore this email.
+                  If you did not register, you can safely ignore this email.
                 </p>
               </td>
             </tr>
             <tr>
               <td style="padding:24px 32px;border-top:1px solid rgba(255,255,255,0.08);text-align:center;">
-                <span style="color:rgba(255,255,255,0.2);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">© 2024 HEALTH AI — Encrypted Clinical Workspace</span>
+                <span style="color:rgba(255,255,255,0.2);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">HEALTH AI</span>
               </td>
             </tr>
           </table>

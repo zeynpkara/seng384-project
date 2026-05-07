@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   Rocket,
@@ -17,6 +18,7 @@ import MeetingsDashboard from '../components/MeetingsDashboard';
 
 interface Post {
   id: string;
+  ownerId: string;
   title: string;
   domain: string;
   description: string;
@@ -24,7 +26,7 @@ interface Post {
   status: string;
   city: string;
   createdAt: string;
-  owner: { name: string; institution: string };
+  owner: { name: string; institution: string; role?: string };
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -56,6 +58,7 @@ function FeedSkeleton() {
 
 export default function TechnicalDashboard() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [feed, setFeed] = useState<Post[]>([]);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
@@ -71,10 +74,17 @@ export default function TechnicalDashboard() {
   const [ndaModal, setNdaModal] = useState<{ open: boolean; meetingId: string }>({ open: false, meetingId: '' });
   const [successMsg, setSuccessMsg] = useState('');
 
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setIsCreateOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const loadFeed = useCallback(async (filters: Record<string, string> = {}) => {
     setFeedLoading(true);
     try {
-      const data = await postsApi.getPosts({ limit: '12', ...filters }) as Post[];
+      const data = await postsApi.getPosts({ limit: '12', ownerRole: 'HEALTHCARE', ...filters }) as Post[];
       setFeed(data);
     } catch {
       setFeed([]);
@@ -190,7 +200,7 @@ export default function TechnicalDashboard() {
               {feed.map(post => {
                 const done = interestDone.has(post.id);
                 const isLoading = interestLoading === post.id;
-                const isOwn = user?.id === (post as any).ownerId;
+                const isOwn = user?.id === post.ownerId;
                 return (
                   <div key={post.id} className="glass-panel p-8 rounded-lg relative overflow-hidden group hover:border-white/20 transition-colors duration-300">
                     <div className="absolute top-0 left-0 w-1 h-full bg-tech-navy" />

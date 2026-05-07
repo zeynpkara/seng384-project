@@ -70,18 +70,20 @@ export default function Profile() {
   const inputClass = 'w-full bg-white/5 border border-white/10 rounded-lg py-2.5 px-4 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors';
   const labelClass = 'block text-[10px] text-white/40 uppercase tracking-widest mb-1.5 font-bold';
   const initials = user ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
+  const accent = user?.role === 'HEALTHCARE' ? 'clinical-green' : user?.role === 'ENGINEER' ? 'tech-navy' : 'system-red';
+  const roleLabel = user?.role === 'HEALTHCARE' ? 'HEALTHCARE PROFILE' : user?.role === 'ENGINEER' ? 'ENGINEER PROFILE' : 'ADMIN PROFILE';
 
   return (
     <div className="max-w-2xl mx-auto pb-24 space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full bg-primary/20 border-2 border-primary/40 flex items-center justify-center text-xl font-bold text-primary">
+        <div className={`w-16 h-16 rounded-full bg-${accent}/20 border-2 border-${accent}/40 flex items-center justify-center text-xl font-bold text-${accent}`}>
           {initials}
         </div>
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-            <p className="text-[10px] text-primary tracking-widest uppercase font-bold">ACCOUNT SETTINGS</p>
+            <span className={`w-2 h-2 rounded-full bg-${accent} animate-pulse`} />
+            <p className={`text-[10px] text-${accent} tracking-widest uppercase font-bold`}>{roleLabel}</p>
           </div>
           <h1 className="text-2xl md:text-3xl text-white font-bold">{data?.name ?? user?.name}</h1>
           <p className="text-white/40 text-sm">{data?.email ?? user?.email}</p>
@@ -122,6 +124,12 @@ export default function Profile() {
             <div className="flex items-center gap-2 text-clinical-green text-xs bg-clinical-green/10 border border-clinical-green/20 rounded-lg px-4 py-3">
               <ShieldCheck size={15} />
               <span>NDA accepted on {new Date(data.ndaAcceptedAt).toLocaleDateString()}</span>
+            </div>
+          )}
+          {!data?.ndaAcceptedAt && user?.role !== 'ADMIN' && (
+            <div className="flex items-center gap-2 text-yellow-400 text-xs bg-yellow-400/10 border border-yellow-400/20 rounded-lg px-4 py-3">
+              <ShieldCheck size={15} />
+              <span>NDA has not been accepted yet. It will be requested the first time you express interest in a post.</span>
             </div>
           )}
 

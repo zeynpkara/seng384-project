@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
   FileText,
@@ -18,6 +19,7 @@ import MeetingsDashboard from '../components/MeetingsDashboard';
 
 interface Post {
   id: string;
+  ownerId: string;
   title: string;
   domain: string;
   description: string;
@@ -25,7 +27,7 @@ interface Post {
   status: string;
   city: string;
   createdAt: string;
-  owner: { name: string; institution: string };
+  owner: { name: string; institution: string; role?: string };
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -53,6 +55,7 @@ function PostCardSkeleton() {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [feed, setFeed] = useState<Post[]>([]);
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
@@ -68,10 +71,17 @@ export default function Dashboard() {
   const [ndaModal, setNdaModal] = useState<{ open: boolean; meetingId: string }>({ open: false, meetingId: '' });
   const [successMsg, setSuccessMsg] = useState('');
 
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') {
+      setIsCreateOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const loadFeed = useCallback(async (filters: Record<string, string> = {}) => {
     setFeedLoading(true);
     try {
-      const data = await postsApi.getPosts({ limit: '12', ...filters }) as Post[];
+      const data = await postsApi.getPosts({ limit: '12', ownerRole: 'ENGINEER', ...filters }) as Post[];
       setFeed(data);
     } catch {
       setFeed([]);
@@ -188,7 +198,7 @@ export default function Dashboard() {
               {feed.map(post => {
                 const done = interestDone.has(post.id) || interestDone.has('*');
                 const loading = interestLoading === post.id;
-                const isOwn = user?.id === (post as any).ownerId;
+                const isOwn = user?.id === post.ownerId;
                 return (
                   <motion.div key={post.id} whileHover={{ y: -5 }} className="glass-panel p-6 rounded-xl flex flex-col gap-4 border-t-2 border-t-tech-navy/50">
                     <div className="flex justify-between items-start">

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { PostStatus, Prisma } from '@prisma/client';
+import { PostStatus, Role, Prisma } from '@prisma/client';
 import prisma from '../lib/prisma';
 import { auditService } from '../services/auditService';
 import { transition } from '../utils/postLifecycle';
@@ -24,12 +24,13 @@ const updatePostSchema = createPostSchema.partial();
 const PUBLIC_STATUSES: PostStatus[] = ['ACTIVE', 'MEETING_SCHEDULED'];
 
 const ownerSelect = {
-  select: { name: true, institution: true },
+  select: { name: true, institution: true, role: true },
 };
 
 function formatPost(post: any, ownerView = false) {
-  const base = {
+  return {
     id: post.id,
+    ownerId: post.ownerId,
     title: post.title,
     domain: post.domain,
     description:
@@ -49,11 +50,10 @@ function formatPost(post: any, ownerView = false) {
     updatedAt: post.updatedAt,
     owner: post.owner,
   };
-  return base;
 }
 
 export async function getPosts(req: Request, res: Response): Promise<void> {
-  const { city, domain, status, expertise, limit } = req.query as Record<string, string>;
+  const { city, domain, status, expertise, limit, ownerRole } = req.query as Record<string, string>;
 
   const where: Prisma.PostWhereInput = {
     status: { in: PUBLIC_STATUSES },
@@ -61,6 +61,7 @@ export async function getPosts(req: Request, res: Response): Promise<void> {
     ...(domain && { domain: { contains: domain, mode: 'insensitive' } }),
     ...(expertise && { requiredExpertise: { contains: expertise, mode: 'insensitive' } }),
     ...(status && PUBLIC_STATUSES.includes(status as PostStatus) && { status: status as PostStatus }),
+    ...(ownerRole && Object.values(Role).includes(ownerRole as Role) && { owner: { role: ownerRole as Role } }),
   };
 
   try {

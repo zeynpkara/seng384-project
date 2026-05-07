@@ -1,12 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { posts } from '../api/client';
+
+export interface PostFormValues {
+  title: string;
+  domain: string;
+  description: string;
+  requiredExpertise: string;
+  projectStage: string;
+  confidentiality: 'PUBLIC' | 'MEETING_ONLY';
+  city: string;
+  country: string;
+  commitmentLevel: string;
+}
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onCreated: () => void;
+  mode?: 'create' | 'edit';
+  postId?: string;
+  initialValues?: Partial<PostFormValues> | null;
 }
 
 const PROJECT_STAGES = [
@@ -25,8 +40,20 @@ const COMMITMENT_OPTIONS = [
   'Full-time 6 months',
 ];
 
-export default function PostCreateModal({ isOpen, onClose, onCreated }: Props) {
-  const [form, setForm] = useState({
+const DEFAULT_FORM: PostFormValues = {
+  title: '',
+  domain: '',
+  description: '',
+  requiredExpertise: '',
+  projectStage: 'IDEA',
+  confidentiality: 'PUBLIC',
+  city: '',
+  country: '',
+  commitmentLevel: '10 hours/week',
+};
+
+export default function PostCreateModal({ isOpen, onClose, onCreated, mode = 'create', postId, initialValues }: Props) {
+  const [form, setForm] = useState<PostFormValues>({
     title: '',
     domain: '',
     description: '',
@@ -40,6 +67,12 @@ export default function PostCreateModal({ isOpen, onClose, onCreated }: Props) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState<'draft' | 'publish' | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    setForm({ ...DEFAULT_FORM, ...initialValues });
+    setError('');
+  }, [initialValues, isOpen]);
+
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
 
@@ -47,22 +80,26 @@ export default function PostCreateModal({ isOpen, onClose, onCreated }: Props) {
     setError('');
     setLoading(publish ? 'publish' : 'draft');
     try {
-      const created = await posts.createPost(form) as { id: string };
-      if (publish) {
-        await posts.publishPost(created.id);
+      if (mode === 'edit' && postId) {
+        await posts.updatePost(postId, form);
+      } else {
+        const created = await posts.createPost(form) as { id: string };
+        if (publish) {
+          await posts.publishPost(created.id);
+        }
       }
       onCreated();
       onClose();
       resetForm();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create post');
+      setError(err instanceof Error ? err.message : `Failed to ${mode === 'edit' ? 'update' : 'create'} post`);
     } finally {
       setLoading(null);
     }
   };
 
   const resetForm = () => {
-    setForm({ title: '', domain: '', description: '', requiredExpertise: '', projectStage: 'IDEA', confidentiality: 'PUBLIC', city: '', country: '', commitmentLevel: '10 hours/week' });
+    setForm(DEFAULT_FORM);
     setError('');
   };
 
@@ -88,8 +125,8 @@ export default function PostCreateModal({ isOpen, onClose, onCreated }: Props) {
           >
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-xl text-white font-bold mb-1">Create Post</h2>
-                <p className="text-white/40 text-sm">Describe your collaboration need</p>
+                <h2 className="text-xl text-white font-bold mb-1">{mode === 'edit' ? 'Edit Post' : 'Create Post'}</h2>
+                <p className="text-white/40 text-sm">{mode === 'edit' ? 'Update your collaboration summary without changing the product scope' : 'Describe your collaboration need'}</p>
               </div>
               <button onClick={onClose} className="text-white/40 hover:text-white transition-colors shrink-0"><X size={20} /></button>
             </div>
@@ -155,24 +192,38 @@ export default function PostCreateModal({ isOpen, onClose, onCreated }: Props) {
               )}
 
               <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleSubmit(false)}
-                  disabled={!!loading}
-                  className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white/70 border border-white/10 rounded-lg font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading === 'draft' && <Loader2 size={14} className="animate-spin" />}
-                  Save as Draft
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSubmit(true)}
-                  disabled={!!loading}
-                  className="flex-1 py-3 bg-primary text-on-primary rounded-lg font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading === 'publish' && <Loader2 size={14} className="animate-spin" />}
-                  Publish
-                </button>
+                {mode === 'edit' ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSubmit(false)}
+                    disabled={!!loading}
+                    className="w-full py-3 bg-primary text-on-primary rounded-lg font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {loading === 'draft' && <Loader2 size={14} className="animate-spin" />}
+                    Save Changes
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleSubmit(false)}
+                      disabled={!!loading}
+                      className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white/70 border border-white/10 rounded-lg font-bold text-xs uppercase tracking-widest transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {loading === 'draft' && <Loader2 size={14} className="animate-spin" />}
+                      Save as Draft
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSubmit(true)}
+                      disabled={!!loading}
+                      className="flex-1 py-3 bg-primary text-on-primary rounded-lg font-bold text-xs uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {loading === 'publish' && <Loader2 size={14} className="animate-spin" />}
+                      Publish
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

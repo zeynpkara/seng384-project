@@ -71,6 +71,8 @@ export default function FilterBar({ onChange, accentColor = 'primary' }: FilterB
 
   const selectClass =
     'bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-colors appearance-none cursor-pointer min-w-[140px]';
+  const optionClass = 'bg-[#111111] text-white';
+  const optionStyle = { backgroundColor: '#111111', color: '#ffffff' };
 
   return (
     <div className="glass-panel rounded-xl p-4 flex flex-wrap items-center gap-3">
@@ -84,11 +86,11 @@ export default function FilterBar({ onChange, accentColor = 'primary' }: FilterB
         value={city}
         onChange={e => setCity(e.target.value)}
         className={selectClass}
-        style={{ colorScheme: 'dark' }}
+        style={{ colorScheme: 'dark', backgroundColor: '#111111', color: '#ffffff' }}
       >
-        <option value="">All Cities</option>
+        <option value="" className={optionClass} style={optionStyle}>All Cities</option>
         {CITIES.map(c => (
-          <option key={c} value={c}>{c}</option>
+          <option key={c} value={c} className={optionClass} style={optionStyle}>{c}</option>
         ))}
       </select>
 
@@ -97,11 +99,11 @@ export default function FilterBar({ onChange, accentColor = 'primary' }: FilterB
         value={domain}
         onChange={e => setDomain(e.target.value)}
         className={selectClass}
-        style={{ colorScheme: 'dark' }}
+        style={{ colorScheme: 'dark', backgroundColor: '#111111', color: '#ffffff' }}
       >
-        <option value="">All Domains</option>
+        <option value="" className={optionClass} style={optionStyle}>All Domains</option>
         {DOMAINS.map(d => (
-          <option key={d} value={d}>{d}</option>
+          <option key={d} value={d} className={optionClass} style={optionStyle}>{d}</option>
         ))}
       </select>
 

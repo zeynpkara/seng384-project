@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Bell,
-  Search,
   Plus,
   Megaphone,
   PlusCircle,
@@ -105,21 +104,26 @@ export default function Layout({ children }: LayoutProps) {
     return 'Precision Workspace';
   };
 
+  const getHomePath = () => {
+    if (user?.role === 'ADMIN') return '/admin';
+    return '/home';
+  };
+
   const getSidebarItems = () => {
-    const baseItems = [
-      { name: 'Announcements', icon: Megaphone, path: '/announcements' },
-      { name: 'Meetings', icon: CalendarCheck, path: '/meetings' },
-      { name: 'NDA Tracking', icon: ShieldCheck, path: '/nda' },
-      { name: 'Profile', icon: Settings, path: '/profile' },
-    ];
     if (user?.role === 'ADMIN') {
-      return [{ name: 'Security Audit', icon: ShieldAlert, path: '/admin' }, ...baseItems];
+      return [
+        { name: 'Admin Home', icon: ShieldAlert, path: '/admin' },
+        { name: 'Audit Logs', icon: Megaphone, path: '/admin#logs' },
+        { name: 'Profile', icon: Settings, path: '/profile' },
+      ];
     }
-    const myPostsPath = user?.role === 'ENGINEER' ? '/projects' : '/dashboard';
     return [
+      { name: 'Home', icon: Megaphone, path: '/home' },
       { name: 'Create Post', icon: PlusCircle, path: '/create-post' },
-      { name: 'My Posts', icon: FileText, path: myPostsPath },
-      ...baseItems,
+      { name: 'My Posts', icon: FileText, path: '/my-posts' },
+      { name: 'Discover', icon: user?.role === 'HEALTHCARE' ? Cpu : Stethoscope, path: '/discover' },
+      { name: 'Meetings', icon: CalendarCheck, path: '/meetings' },
+      { name: 'Profile', icon: Settings, path: '/profile' },
     ];
   };
 
@@ -133,17 +137,22 @@ export default function Layout({ children }: LayoutProps) {
       <nav className="fixed top-0 w-full z-50 bg-[#0E0E0E]/80 backdrop-blur-xl border-b border-white/10 h-16 md:h-20">
         <div className="flex justify-between items-center px-6 md:px-8 h-full w-full max-w-[1440px] mx-auto">
           <div className="flex items-center gap-4 md:gap-12">
-            <Link to="/" className="text-xl md:text-2xl font-bold tracking-tighter text-white">HEALTH AI</Link>
+            <Link to={user ? getHomePath() : '/'} className="text-xl md:text-2xl font-bold tracking-tighter text-white">HEALTH AI</Link>
             {user && (
               <div className="hidden md:flex items-center gap-8">
                 <Link
-                  to={user.role === 'ADMIN' ? '/admin' : user.role === 'ENGINEER' ? '/projects' : '/dashboard'}
-                  className={`font-medium tracking-tight h-full flex items-center border-b-2 transition-colors duration-200 ${location.pathname !== '/' ? `text-white border-${accentColor}` : 'text-white/60 border-transparent hover:text-white'}`}
+                  to={getHomePath()}
+                  className={`font-medium tracking-tight h-full flex items-center border-b-2 transition-colors duration-200 ${location.pathname === getHomePath() ? `text-white border-${accentColor}` : 'text-white/60 border-transparent hover:text-white'}`}
                 >
                   Home
                 </Link>
-                <Link to="/collaborators" className="text-white/60 font-medium tracking-tight hover:text-white transition-colors duration-200">Collaborators</Link>
-                <Link to="/network" className="text-white/60 font-medium tracking-tight hover:text-white transition-colors duration-200">Network</Link>
+                {user.role !== 'ADMIN' && (
+                  <>
+                    <Link to="/my-posts" className={`font-medium tracking-tight transition-colors duration-200 ${location.pathname === '/my-posts' ? 'text-white' : 'text-white/60 hover:text-white'}`}>My Posts</Link>
+                    <Link to="/discover" className={`font-medium tracking-tight transition-colors duration-200 ${location.pathname === '/discover' ? 'text-white' : 'text-white/60 hover:text-white'}`}>Discover</Link>
+                    <Link to="/meetings" className={`font-medium tracking-tight transition-colors duration-200 ${location.pathname === '/meetings' ? 'text-white' : 'text-white/60 hover:text-white'}`}>Meetings</Link>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -166,15 +175,17 @@ export default function Layout({ children }: LayoutProps) {
               </>
             ) : (
               <>
-                <div className="relative hidden lg:block">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={16} />
-                  <input className="bg-white/5 border border-white/10 rounded-lg py-1.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors w-48 xl:w-64 placeholder:text-white/30" placeholder="Search..." type="text" />
-                </div>
-                <button className="text-white/60 hover:text-white transition-all w-10 h-10 flex items-center justify-center rounded-full"><Bell size={20} /></button>
+                <button onClick={() => navigate('/meetings')} className="text-white/60 hover:text-white transition-all w-10 h-10 flex items-center justify-center rounded-full" aria-label="Open meetings">
+                  <Bell size={20} />
+                </button>
                 <button onClick={logout} className="text-white/60 hover:text-red-400 transition-all w-10 h-10 flex items-center justify-center rounded-full"><LogOut size={20} /></button>
-                <div className={`w-8 h-8 rounded-full bg-surface-container flex items-center justify-center border border-${accentColor} cursor-pointer shadow-[0_0_10px_rgba(0,0,0,0.5)] text-xs font-bold text-white`}>
+                <Link
+                  to="/profile"
+                  className={`w-8 h-8 rounded-full bg-surface-container flex items-center justify-center border border-${accentColor} cursor-pointer shadow-[0_0_10px_rgba(0,0,0,0.5)] text-xs font-bold text-white`}
+                  aria-label="Open profile"
+                >
                   {initials}
-                </div>
+                </Link>
                 <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-white w-10 h-10 flex items-center justify-center"><Menu size={24} /></button>
               </>
             )}
@@ -192,7 +203,9 @@ export default function Layout({ children }: LayoutProps) {
             </div>
             <nav className="flex-1 space-y-1 px-3">
               {getSidebarItems().map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = item.path.includes('#')
+                  ? location.pathname === item.path.split('#')[0]
+                  : location.pathname === item.path;
                 return (
                   <Link
                     key={item.name}
@@ -205,12 +218,17 @@ export default function Layout({ children }: LayoutProps) {
                 );
               })}
             </nav>
-            <div className="px-6 mt-auto">
-              <button className={`w-full py-3 bg-${accentColor}/10 hover:bg-${accentColor}/20 text-${accentColor} border border-${accentColor}/20 rounded-lg text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 uppercase font-bold`}>
-                <Plus size={14} />
-                <span>NEW REQUEST</span>
-              </button>
-            </div>
+            {user?.role !== 'ADMIN' && (
+              <div className="px-6 mt-auto">
+                <button
+                  onClick={() => navigate('/my-posts?create=true')}
+                  className={`w-full py-3 bg-${accentColor}/10 hover:bg-${accentColor}/20 text-${accentColor} border border-${accentColor}/20 rounded-lg text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 uppercase font-bold`}
+                >
+                  <Plus size={14} />
+                  <span>NEW REQUEST</span>
+                </button>
+              </div>
+            )}
           </aside>
         )}
 
@@ -218,6 +236,45 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </main>
       </div>
+
+      <AnimatePresence>
+        {user && isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] md:hidden"
+          >
+            <button className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} aria-label="Close mobile menu" />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              className="absolute right-0 top-0 h-full w-72 bg-[#111111] border-l border-white/10 p-6 flex flex-col gap-4"
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-white font-semibold">{getRoleTitle()}</p>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="text-white/50 hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {getSidebarItems().map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <item.icon size={18} />
+                    <span>{item.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Auth Modal */}
       <AnimatePresence>

@@ -35,10 +35,35 @@ export async function suspendUser(req: Request, res: Response): Promise<void> {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.params.id } });
     if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+    if (user.role === 'ADMIN') { res.status(400).json({ error: 'Cannot suspend ADMIN users' }); return; }
 
-    await prisma.user.update({ where: { id: req.params.id }, data: { isSuspended: true } });
-    auditService.log({ action: 'USER_SUSPENDED', userId: req.user!.id, entity: 'User', entityId: req.params.id });
-    res.json({ message: 'User suspended' });
+    const nextSuspended = !user.isSuspended;
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isSuspended: nextSuspended },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        name: true,
+        institution: true,
+        isVerified: true,
+        isSuspended: true,
+        createdAt: true,
+      },
+    });
+
+    auditService.log({
+      action: nextSuspended ? 'USER_SUSPENDED' : 'USER_REACTIVATED',
+      userId: req.user!.id,
+      entity: 'User',
+      entityId: req.params.id,
+    });
+
+    res.json({
+      message: nextSuspended ? 'User suspended' : 'User reactivated',
+      user: updated,
+    });
   } catch (err) {
     console.error('admin.suspendUser error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -83,7 +108,11 @@ export async function adminDeletePost(req: Request, res: Response): Promise<void
     const post = await prisma.post.findUnique({ where: { id: req.params.id } });
     if (!post) { res.status(404).json({ error: 'Post not found' }); return; }
 
-    await prisma.post.delete({ where: { id: req.params.id } });
+    await prisma.$transaction([
+      prisma.meetingRequest.deleteMany({ where: { postId: req.params.id } }),
+      prisma.post.delete({ where: { id: req.params.id } }),
+    ]);
+
     auditService.log({ action: 'POST_MODERATED', userId: req.user!.id, entity: 'Post', entityId: req.params.id });
     res.json({ message: 'Post removed' });
   } catch (err) {
