@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Download, Trash2, X, Loader2, ShieldCheck, User } from 'lucide-react';
+import { Save, Download, Trash2, X, Loader2, ShieldCheck, User, BookOpen, Lightbulb, GraduationCap } from 'lucide-react';
 import { profile as profileApi, downloadFile } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 interface UserData {
   id: string; email: string; role: string; name: string;
   institution: string; ndaAcceptedAt: string | null; createdAt: string;
+  bio: string | null; specialization: string | null;
+  education: string | null; interests: string | null;
 }
 
 export default function Profile() {
@@ -13,6 +15,10 @@ export default function Profile() {
   const [data, setData] = useState<UserData | null>(null);
   const [name, setName] = useState('');
   const [institution, setInstitution] = useState('');
+  const [bio, setBio] = useState('');
+  const [specialization, setSpecialization] = useState('');
+  const [education, setEducation] = useState('');
+  const [interests, setInterests] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -27,6 +33,10 @@ export default function Profile() {
       setData(u);
       setName(u.name);
       setInstitution(u.institution);
+      setBio(u.bio ?? '');
+      setSpecialization(u.specialization ?? '');
+      setEducation(u.education ?? '');
+      setInterests(u.interests ?? '');
     }).catch(() => {});
   }, []);
 
@@ -35,7 +45,7 @@ export default function Profile() {
     setSaving(true);
     setSaveMsg('');
     try {
-      await profileApi.updateProfile({ name, institution });
+      await profileApi.updateProfile({ name, institution, bio, specialization, education, interests });
       setSaveMsg('Profile updated successfully.');
     } catch (err: unknown) {
       setSaveMsg(err instanceof Error ? err.message : 'Failed to save');
@@ -117,6 +127,73 @@ export default function Profile() {
             <div>
               <label className={labelClass}>Role (read-only)</label>
               <input type="text" value={data?.role ?? ''} className={`${inputClass} opacity-40 cursor-not-allowed`} readOnly />
+            </div>
+          </div>
+
+          {/* Professional Details */}
+          <div className="pt-2 border-t border-white/5 space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <BookOpen size={14} className="text-white/30" />
+              <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">
+                {user?.role === 'HEALTHCARE' ? 'Clinical Profile' : 'Technical Profile'}
+              </p>
+            </div>
+
+            <div>
+              <label className={labelClass}>
+                {user?.role === 'HEALTHCARE' ? 'Clinical Bio' : 'Professional Bio'}
+              </label>
+              <textarea
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+                placeholder={user?.role === 'HEALTHCARE'
+                  ? 'Describe your clinical background, hospital affiliation, and what you hope to achieve through collaboration...'
+                  : 'Describe your engineering background, current projects, and what clinical problems you want to solve...'}
+                className={`${inputClass} resize-none h-24`}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>
+                {user?.role === 'HEALTHCARE' ? 'Medical Specialty' : 'Technical Specialization'}
+              </label>
+              <input
+                type="text"
+                value={specialization}
+                onChange={e => setSpecialization(e.target.value)}
+                placeholder={user?.role === 'HEALTHCARE'
+                  ? 'e.g. Interventional Cardiology, Retinal Surgery, Emergency Medicine'
+                  : 'e.g. Machine Learning, Signal Processing, Medical Device Design'}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <GraduationCap size={11} style={{ opacity: 0.5 }} />
+                Education
+              </label>
+              <textarea
+                value={education}
+                onChange={e => setEducation(e.target.value)}
+                placeholder="MD — University Name (Year)&#10;Fellowship / MSc — Institution (Year)"
+                className={`${inputClass} resize-none h-20`}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Lightbulb size={11} style={{ opacity: 0.5 }} />
+                Research Interests
+              </label>
+              <textarea
+                value={interests}
+                onChange={e => setInterests(e.target.value)}
+                placeholder={user?.role === 'HEALTHCARE'
+                  ? 'e.g. AI diagnostics, wearable monitors, federated learning in clinical trials'
+                  : 'e.g. real-time inference, edge ML, explainable AI for clinical settings'}
+                className={`${inputClass} resize-none h-16`}
+              />
             </div>
           </div>
 

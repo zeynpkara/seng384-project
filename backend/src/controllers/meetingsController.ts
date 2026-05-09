@@ -11,6 +11,7 @@ const slotSchema = z.object({
 
 const proposeSlotsSchema = z.object({
   slots: z.array(slotSchema).min(1).max(3),
+  meetingLink: z.string().url('Meeting link must be a valid URL').optional().or(z.literal('')),
 });
 
 const confirmSlotSchema = z.object({
@@ -129,7 +130,11 @@ export async function proposeSlots(req: Request, res: Response): Promise<void> {
 
     const updated = await prisma.meetingRequest.update({
       where: { id: req.params.id },
-      data: { proposedSlots: parsed.data.slots, status: 'SLOTS_PROPOSED' },
+      data: {
+        proposedSlots: parsed.data.slots,
+        status: 'SLOTS_PROPOSED',
+        ...(parsed.data.meetingLink ? { meetingLink: parsed.data.meetingLink } : {}),
+      },
     });
 
     auditService.log({ action: 'SLOTS_PROPOSED', userId: req.user!.id, entity: 'MeetingRequest', entityId: meeting.id });
@@ -217,9 +222,9 @@ export async function getMyMeetings(req: Request, res: Response): Promise<void> 
       },
       orderBy: { updatedAt: 'desc' },
       include: {
-        post: { select: { id: true, title: true, domain: true, city: true } },
-        requester: { select: { id: true, name: true, institution: true } },
-        postOwner: { select: { id: true, name: true, institution: true } },
+        post: { select: { id: true, title: true, domain: true, city: true, preferredPlatform: true } },
+        requester: { select: { id: true, name: true, institution: true, role: true } },
+        postOwner: { select: { id: true, name: true, institution: true, role: true } },
       },
     });
     res.json(meetings);

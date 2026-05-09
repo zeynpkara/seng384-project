@@ -87,8 +87,8 @@ export const meetings = {
   acceptNda: (meetingId: string) =>
     apiCall(`/api/meetings/${meetingId}/accept-nda`, { method: 'POST' }),
 
-  proposeSlots: (id: string, slots: Array<{ date: string; time: string }>) =>
-    apiCall(`/api/meetings/${id}/propose-slots`, { method: 'POST', body: JSON.stringify({ slots }) }),
+  proposeSlots: (id: string, slots: Array<{ date: string; time: string }>, meetingLink?: string) =>
+    apiCall(`/api/meetings/${id}/propose-slots`, { method: 'POST', body: JSON.stringify({ slots, meetingLink: meetingLink || undefined }) }),
 
   confirmSlot: (id: string, slot: { date: string; time: string }) =>
     apiCall(`/api/meetings/${id}/confirm-slot`, { method: 'PATCH', body: JSON.stringify({ slot }) }),
@@ -145,6 +145,19 @@ export const profile = {
 
   deleteAccount: (password: string) =>
     apiCall('/api/users/me', { method: 'DELETE', body: JSON.stringify({ password }) }),
+};
+
+// ─── Messages ────────────────────────────────────────────────────────────────
+
+export const messages = {
+  getMessages: (meetingId: string) =>
+    apiCall<{ id: string; content: string; createdAt: string; sender: { id: string; name: string; role: string } }[]>(`/api/messages/${meetingId}`),
+
+  sendMessage: (meetingId: string, content: string) =>
+    apiCall<{ id: string; content: string; createdAt: string; sender: { id: string; name: string; role: string } }>(
+      `/api/messages/${meetingId}`,
+      { method: 'POST', body: JSON.stringify({ content }) },
+    ),
 };
 
 // ─── File download helper ─────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth, AuthUser } from '../context/AuthContext';
 import { auth } from '../api/client';
+import ChatBot from './ChatBot';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -112,8 +113,7 @@ export default function Layout({ children }: LayoutProps) {
   const getSidebarItems = () => {
     if (user?.role === 'ADMIN') {
       return [
-        { name: 'Admin Home', icon: ShieldAlert, path: '/admin' },
-        { name: 'Audit Logs', icon: Megaphone, path: '/admin#logs' },
+        { name: 'Admin Console', icon: ShieldAlert, path: '/admin' },
         { name: 'Profile', icon: Settings, path: '/profile' },
       ];
     }
@@ -476,6 +476,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </footer>
       )}
+      {user && <ChatBot />}
     </div>
   );
 }

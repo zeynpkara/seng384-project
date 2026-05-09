@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, ShieldCheck, ShieldX } from 'lucide-react';
 import { auth } from '../api/client';
@@ -9,8 +9,13 @@ export default function VerifyEmail() {
   const [searchParams] = useSearchParams();
   const [state, setState] = useState<VerifyState>('loading');
   const [message, setMessage] = useState('Verifying your email...');
+  const called = useRef(false);
 
   useEffect(() => {
+    // Prevent React StrictMode double-invocation from consuming the token twice
+    if (called.current) return;
+    called.current = true;
+
     const token = searchParams.get('token');
 
     if (!token) {
@@ -19,24 +24,16 @@ export default function VerifyEmail() {
       return;
     }
 
-    let cancelled = false;
-
     auth.verifyEmail(token)
       .then((response) => {
-        if (cancelled) return;
         const result = response as { message?: string };
         setState('success');
         setMessage(result.message || 'Email verified. You can now log in.');
       })
       .catch((error: unknown) => {
-        if (cancelled) return;
         setState('error');
         setMessage(error instanceof Error ? error.message : 'Verification failed.');
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [searchParams]);
 
   const isLoading = state === 'loading';

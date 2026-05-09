@@ -53,9 +53,25 @@ export async function register(req: Request, res: Response): Promise<void> {
 
     auditService.log({ action: 'USER_REGISTERED', userId: user.id, ipAddress: getIp(req) });
 
-    await sendVerificationEmail(email, verificationToken);
+    let emailSent = false;
+    try {
+      await sendVerificationEmail(email, verificationToken);
+      emailSent = true;
+    } catch (emailErr) {
+      console.error('Email sending failed:', emailErr);
+    }
 
-    res.status(201).json({ message: 'Verification email sent. Check your inbox.' });
+    if (emailSent) {
+      res.status(201).json({ message: 'Verification email sent. Please check your inbox.' });
+    } else {
+      // Dev/misconfigured SMTP — account created, surface the verify link
+      const verifyUrl = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
+      console.warn(`[DEV] Email not sent. Verify manually: ${verifyUrl}`);
+      res.status(201).json({
+        message: 'Account created. Email delivery failed — use the verifyUrl to activate (dev mode).',
+        verifyUrl,
+      });
+    }
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -68,7 +84,13 @@ export async function verifyEmail(req: Request, res: Response): Promise<void> {
   try {
     const user = await prisma.user.findFirst({ where: { verificationToken: token } });
     if (!user) {
+      // Token may have been consumed by a duplicate call (e.g. StrictMode); check if already verified
       res.status(400).json({ error: 'Invalid or expired verification token' });
+      return;
+    }
+
+    if (user.isVerified) {
+      res.json({ message: 'Email already verified. You can log in.' });
       return;
     }
 

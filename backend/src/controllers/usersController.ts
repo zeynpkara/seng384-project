@@ -7,7 +7,7 @@ export async function getProfile(req: Request, res: Response): Promise<void> {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.id },
-      select: { id: true, email: true, role: true, name: true, institution: true, isVerified: true, ndaAcceptedAt: true, createdAt: true },
+      select: { id: true, email: true, role: true, name: true, institution: true, isVerified: true, ndaAcceptedAt: true, createdAt: true, bio: true, specialization: true, education: true, interests: true },
     });
     if (!user) { res.status(404).json({ error: 'User not found' }); return; }
     res.json(user);
@@ -18,7 +18,10 @@ export async function getProfile(req: Request, res: Response): Promise<void> {
 }
 
 export async function updateProfile(req: Request, res: Response): Promise<void> {
-  const { name, institution } = req.body as { name?: string; institution?: string };
+  const { name, institution, bio, specialization, education, interests } = req.body as {
+    name?: string; institution?: string;
+    bio?: string; specialization?: string; education?: string; interests?: string;
+  };
 
   try {
     const updated = await prisma.user.update({
@@ -26,8 +29,12 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
       data: {
         ...(name && { name }),
         ...(institution && { institution }),
+        ...(bio !== undefined && { bio: bio || null }),
+        ...(specialization !== undefined && { specialization: specialization || null }),
+        ...(education !== undefined && { education: education || null }),
+        ...(interests !== undefined && { interests: interests || null }),
       },
-      select: { id: true, email: true, role: true, name: true, institution: true },
+      select: { id: true, email: true, role: true, name: true, institution: true, bio: true, specialization: true, education: true, interests: true },
     });
     res.json(updated);
   } catch (err) {

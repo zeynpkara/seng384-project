@@ -8,49 +8,96 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
-  passwordHash      String
-  role              Role
-  name              String
-  institution       String
-  isVerified        Boolean   @default(false)
-  verificationToken String?
-  isSuspended       Boolean   @default(false)
-  ndaAcceptedAt     DateTime?
-  createdAt         DateTime  @default(now())
-
-  posts                   Post[]
-  meetingRequestsSent     MeetingRequest[] @relation("Requester")
-  meetingRequestsReceived MeetingRequest[] @relation("PostOwner")
+  id                      String           @id @default(uuid())
+  email                   String           @unique
+  passwordHash            String
+  role                    Role
+  name                    String
+  institution             String
+  isVerified              Boolean          @default(false)
+  verificationToken       String?
+  isSuspended             Boolean          @default(false)
+  ndaAcceptedAt           DateTime?
+  bio                     String?
+  specialization          String?
+  education               String?
+  interests               String?
+  createdAt               DateTime         @default(now())
   activityLogs            ActivityLog[]
-}
-
-enum Role {
-  HEALTHCARE
-  ENGINEER
-  ADMIN
+  meetingRequestsReceived MeetingRequest[] @relation("PostOwner")
+  meetingRequestsSent     MeetingRequest[] @relation("Requester")
+  posts                   Post[]
+  messages                Message[]
 }
 
 model Post {
-  id                String      @id @default(uuid())
+  id                String           @id @default(uuid())
   title             String
   domain            String
   description       String
   requiredExpertise String
   projectStage      ProjectStage
   confidentiality   Confidentiality
+  preferredPlatform MeetingPlatform  @default(OTHER)
   city              String
   country           String
   commitmentLevel   String
-  status            PostStatus  @default(DRAFT)
+  status            PostStatus       @default(DRAFT)
   expiresAt         DateTime?
-  autoClose         Boolean     @default(false)
+  autoClose         Boolean          @default(false)
   ownerId           String
-  owner             User        @relation(fields: [ownerId], references: [id])
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   meetingRequests   MeetingRequest[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  owner             User             @relation(fields: [ownerId], references: [id])
+}
+
+model MeetingRequest {
+  id            String        @id @default(uuid())
+  postId        String
+  requesterId   String
+  postOwnerId   String
+  status        MeetingStatus @default(PENDING)
+  message       String?
+  ndaAccepted   Boolean       @default(false)
+  ndaAcceptedAt DateTime?
+  proposedSlots Json?
+  confirmedSlot Json?
+  meetingLink   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  post          Post          @relation(fields: [postId], references: [id])
+  postOwner     User          @relation("PostOwner", fields: [postOwnerId], references: [id])
+  requester     User          @relation("Requester", fields: [requesterId], references: [id])
+  messages      Message[]
+}
+
+model Message {
+  id        String         @id @default(uuid())
+  meetingId String
+  senderId  String
+  content   String
+  createdAt DateTime       @default(now())
+  meeting   MeetingRequest @relation(fields: [meetingId], references: [id])
+  sender    User           @relation(fields: [senderId], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String?
+  entityId  String?
+  ipAddress String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  HEALTHCARE
+  ENGINEER
+  ADMIN
 }
 
 enum PostStatus {
@@ -74,24 +121,6 @@ enum Confidentiality {
   MEETING_ONLY
 }
 
-model MeetingRequest {
-  id            String        @id @default(uuid())
-  postId        String
-  post          Post          @relation(fields: [postId], references: [id])
-  requesterId   String
-  requester     User          @relation("Requester", fields: [requesterId], references: [id])
-  postOwnerId   String
-  postOwner     User          @relation("PostOwner", fields: [postOwnerId], references: [id])
-  status        MeetingStatus @default(PENDING)
-  message       String?
-  ndaAccepted   Boolean       @default(false)
-  ndaAcceptedAt DateTime?
-  proposedSlots Json?
-  confirmedSlot Json?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-}
-
 enum MeetingStatus {
   PENDING
   NDA_PENDING
@@ -101,14 +130,9 @@ enum MeetingStatus {
   CANCELLED
 }
 
-model ActivityLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
-  action    String
-  entity    String?
-  entityId  String?
-  ipAddress String?
-  metadata  Json?
-  createdAt DateTime @default(now())
+enum MeetingPlatform {
+  ZOOM
+  GOOGLE_MEET
+  TEAMS
+  OTHER
 }

@@ -8,7 +8,14 @@ import {
   Stethoscope,
   CheckCircle2,
   Loader2,
+  Video,
 } from 'lucide-react';
+
+const PLATFORM_BADGE: Record<string, { label: string; cls: string }> = {
+  ZOOM: { label: 'Zoom', cls: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
+  GOOGLE_MEET: { label: 'Meet', cls: 'text-green-400 bg-green-400/10 border-green-400/20' },
+  TEAMS: { label: 'Teams', cls: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
+};
 import { posts as postsApi, meetings as meetingsApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import PostCreateModal from '../components/PostCreateModal';
@@ -23,6 +30,7 @@ interface Post {
   domain: string;
   description: string;
   requiredExpertise: string;
+  preferredPlatform?: string;
   status: string;
   city: string;
   createdAt: string;
@@ -222,7 +230,14 @@ export default function TechnicalDashboard() {
                         <Database size={14} />
                         <span className="truncate max-w-[160px]">{post.requiredExpertise}</span>
                       </span>
-                      <span className="text-[10px] text-white/30 uppercase tracking-widest">{post.domain} • {post.city}</span>
+                      <span className="text-[10px] text-white/30 uppercase tracking-widest flex items-center gap-2 flex-wrap">
+                        <span>{post.domain} • {post.city}</span>
+                        {post.preferredPlatform && PLATFORM_BADGE[post.preferredPlatform] && (
+                          <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border font-bold normal-case tracking-normal text-[9px] ${PLATFORM_BADGE[post.preferredPlatform].cls}`}>
+                            <Video size={9} />{PLATFORM_BADGE[post.preferredPlatform].label}
+                          </span>
+                        )}
+                      </span>
                       {!isOwn && post.status === 'ACTIVE' && (
                         <button
                           onClick={() => handleExpressInterest(post.id)}

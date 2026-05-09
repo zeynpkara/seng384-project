@@ -19,7 +19,26 @@
       "Bash(cat .env)",
       "Bash(ls frontend/)",
       "Bash(pg_isready -h localhost -p 5432)",
-      "Bash(psql --version)"
+      "Bash(psql --version)",
+      "Bash(psql postgresql://postgres:postgres@localhost:5432/healthai -c \"SELECT 1\")",
+      "Bash(curl -s http://localhost:8000/api/health)",
+      "Bash(psql *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -X POST http://localhost:8000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"eng1@metu.edu.tr\",\"password\":\"Demo1234!\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -s -X POST http://localhost:8000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@metu.edu.tr\",\"password\":\"Demo1234!\"}')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['token']\\)\")",
+      "Bash(curl -s http://localhost:8000/api/meetings/mine -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjQxMWI5YzNjLTJkOTYtNGVjYy1hOGQ3LTRmOGUxNzAzN2E4MSIsImVtYWlsIjoiZW5nMUBtZXR1LmVkdS50ciIsInJvbGUiOiJFTkdJTkVFUiIsIm5hbWUiOiJFbXJlIFnEsWxkxLF6IiwiaWF0IjoxNzc4MTUxMjk3LCJleHAiOjE3Nzg3NTYwOTd9.ijlGKqvJniTOqyVm4ucG53cvFHgK-YVZAgB88F6y_2M')",
+      "Bash(curl -s -X POST http://localhost:8000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"doctor1@hacettepe.edu.tr\",\"password\":\"Demo1234!\"}')",
+      "Bash(python3 -c \"import sys,json; m=json.load\\(sys.stdin\\); [print\\(x['id'],x['status'],x.get\\('post',{}\\).get\\('title',''\\)\\) for x in m]\")",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k,v\\) for k,v in d.get\\('dependencies',{}\\).items\\(\\)]\")",
+      "Bash(curl *)",
+      "Bash(node *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Login OK, role:', d.get\\('user',{}\\).get\\('role','ERROR'\\)\\)\")",
+      "Bash(wait)",
+      "Bash(pkill -f \"tsx watch src/app.ts\")"
     ]
   }
 }

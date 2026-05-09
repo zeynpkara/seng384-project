@@ -10,6 +10,7 @@ export interface PostFormValues {
   requiredExpertise: string;
   projectStage: string;
   confidentiality: 'PUBLIC' | 'MEETING_ONLY';
+  preferredPlatform: 'ZOOM' | 'GOOGLE_MEET' | 'TEAMS' | 'OTHER';
   city: string;
   country: string;
   commitmentLevel: string;
@@ -32,6 +33,13 @@ const PROJECT_STAGES = [
   { value: 'PRE_DEPLOYMENT', label: 'Pre-Deployment' },
 ] as const;
 
+const PLATFORM_OPTIONS = [
+  { value: 'ZOOM', label: 'Zoom' },
+  { value: 'GOOGLE_MEET', label: 'Google Meet' },
+  { value: 'TEAMS', label: 'Microsoft Teams' },
+  { value: 'OTHER', label: 'Other / TBD' },
+] as const;
+
 const COMMITMENT_OPTIONS = [
   '5 hours/week',
   '10 hours/week',
@@ -47,23 +55,14 @@ const DEFAULT_FORM: PostFormValues = {
   requiredExpertise: '',
   projectStage: 'IDEA',
   confidentiality: 'PUBLIC',
+  preferredPlatform: 'OTHER',
   city: '',
   country: '',
   commitmentLevel: '10 hours/week',
 };
 
 export default function PostCreateModal({ isOpen, onClose, onCreated, mode = 'create', postId, initialValues }: Props) {
-  const [form, setForm] = useState<PostFormValues>({
-    title: '',
-    domain: '',
-    description: '',
-    requiredExpertise: '',
-    projectStage: 'IDEA' as string,
-    confidentiality: 'PUBLIC' as 'PUBLIC' | 'MEETING_ONLY',
-    city: '',
-    country: '',
-    commitmentLevel: '10 hours/week',
-  });
+  const [form, setForm] = useState<PostFormValues>({ ...DEFAULT_FORM });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState<'draft' | 'publish' | null>(null);
 
@@ -185,6 +184,27 @@ export default function PostCreateModal({ isOpen, onClose, onCreated, mode = 'cr
                     <option value="MEETING_ONLY">Meeting Only</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Preferred Meeting Platform</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {PLATFORM_OPTIONS.map(p => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, preferredPlatform: p.value as PostFormValues['preferredPlatform'] }))}
+                      className={`py-2.5 px-3 rounded-lg border text-xs font-bold uppercase tracking-wide transition-all ${
+                        form.preferredPlatform === p.value
+                          ? 'bg-primary/20 border-primary/50 text-primary'
+                          : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10 hover:text-white/60'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] text-white/30 mt-1.5">Actual link will be shared when scheduling the meeting</p>
               </div>
 
               {error && (

@@ -1,9 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckCircle2, Compass, Loader2, ShieldCheck, Users } from 'lucide-react';
+import { CheckCircle2, Compass, Loader2, ShieldCheck, Users, Video } from 'lucide-react';
+
+const PLATFORM_BADGE: Record<string, { label: string; cls: string }> = {
+  ZOOM: { label: 'Zoom', cls: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
+  GOOGLE_MEET: { label: 'Meet', cls: 'text-green-400 bg-green-400/10 border-green-400/20' },
+  TEAMS: { label: 'Teams', cls: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
+  OTHER: { label: '', cls: '' },
+};
 import { meetings as meetingsApi, posts as postsApi } from '../api/client';
 import FilterBar from '../components/FilterBar';
 import MeetingsDashboard from '../components/MeetingsDashboard';
 import NdaModal from '../components/NdaModal';
+import MatchmakingAI from '../components/MatchmakingAI';
 import { useAuth } from '../context/AuthContext';
 
 interface Post {
@@ -13,9 +21,10 @@ interface Post {
   domain: string;
   description: string;
   requiredExpertise: string;
+  preferredPlatform?: string;
   status: string;
   city: string;
-  owner: { name: string; institution: string };
+  owner: { name: string; institution: string; role: string };
 }
 
 interface Meeting {
@@ -158,10 +167,18 @@ export default function DiscoverPage() {
                           </div>
                         </div>
                         <p className="text-sm text-white/60 leading-relaxed">{post.description}</p>
-                        <div className="flex flex-wrap gap-3 text-[10px] uppercase tracking-widest text-white/30">
+                        <div className="flex flex-wrap gap-3 text-[10px] uppercase tracking-widest text-white/30 items-center">
                           <span>{post.domain}</span>
                           <span>{post.requiredExpertise}</span>
                           <span>{post.city}</span>
+                          {post.preferredPlatform && post.preferredPlatform !== 'OTHER' && (() => {
+                            const p = PLATFORM_BADGE[post.preferredPlatform];
+                            return p ? (
+                              <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border font-bold normal-case tracking-normal ${p.cls}`}>
+                                <Video size={9} />{p.label}
+                              </span>
+                            ) : null;
+                          })()}
                         </div>
                       </div>
 
@@ -185,6 +202,10 @@ export default function DiscoverPage() {
 
         <aside className="lg:col-span-4">
           <div className="space-y-6">
+            {user && feed.length > 0 && (
+              <MatchmakingAI posts={feed} />
+            )}
+
             <div className="glass-panel rounded-2xl p-6">
               <h2 className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold mb-4">How Discovery Works</h2>
               <ul className="space-y-3 text-sm text-white/55 leading-relaxed">

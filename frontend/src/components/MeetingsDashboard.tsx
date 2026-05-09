@@ -1,8 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CalendarCheck, Clock, CheckCircle2, XCircle, Loader2, Plus, Send, ShieldCheck } from 'lucide-react';
+import {
+  CalendarCheck, Clock, CheckCircle2, XCircle, Loader2, Plus, Send, ShieldCheck,
+  Video, Users, ExternalLink, Building2, MessageSquare,
+} from 'lucide-react';
 import { meetings as meetingsApi } from '../api/client';
+import ChatWindow from './ChatWindow';
 
 interface Slot { date: string; time: string }
+
+interface Party {
+  id: string;
+  name: string;
+  institution: string;
+  role: 'HEALTHCARE' | 'ENGINEER' | 'ADMIN';
+}
 
 interface Meeting {
   id: string;
@@ -10,9 +21,10 @@ interface Meeting {
   message: string | null;
   proposedSlots: Slot[] | null;
   confirmedSlot: Slot | null;
-  post: { id: string; title: string; domain: string };
-  requester: { id: string; name: string };
-  postOwner: { id: string; name: string };
+  meetingLink: string | null;
+  post: { id: string; title: string; domain: string; city: string; preferredPlatform: string };
+  requester: Party;
+  postOwner: Party;
 }
 
 interface Props {
@@ -20,9 +32,68 @@ interface Props {
   refreshKey?: number;
 }
 
+const PLATFORM_LABELS: Record<string, { label: string; color: string }> = {
+  ZOOM: { label: 'Zoom', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
+  GOOGLE_MEET: { label: 'Google Meet', color: 'text-green-400 bg-green-400/10 border-green-400/20' },
+  TEAMS: { label: 'Teams', color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
+  OTHER: { label: 'Platform TBD', color: 'text-white/30 bg-white/5 border-white/10' },
+};
+
+const ROLE_COLORS: Record<string, string> = {
+  HEALTHCARE: 'bg-clinical-green/20 text-clinical-green border-clinical-green/30',
+  ENGINEER: 'bg-tech-navy/20 text-tech-navy border-tech-navy/30',
+  ADMIN: 'bg-system-red/20 text-system-red border-system-red/20',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  HEALTHCARE: 'Healthcare',
+  ENGINEER: 'Engineer',
+  ADMIN: 'Admin',
+};
+
+function Initials({ name, role }: { name: string; role: string }) {
+  const parts = name.trim().split(' ');
+  const initials = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+  const colorMap: Record<string, string> = {
+    HEALTHCARE: 'bg-clinical-green/20 text-clinical-green',
+    ENGINEER: 'bg-tech-navy/20 text-[#60a5fa]',
+    ADMIN: 'bg-system-red/20 text-system-red',
+  };
+  return (
+    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border ${colorMap[role] ?? 'bg-white/10 text-white/60'} border-white/10`}>
+      {initials}
+    </div>
+  );
+}
+
+function PartyCard({ party, label }: { party: Party; label: string }) {
+  return (
+    <div className="flex items-center gap-2.5 p-2.5 bg-white/3 rounded-lg border border-white/5">
+      <Initials name={party.name} role={party.role} />
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-white text-xs font-semibold truncate">{party.name}</span>
+          <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${ROLE_COLORS[party.role] ?? ''}`}>
+            {ROLE_LABELS[party.role]}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 mt-0.5">
+          <Building2 size={10} className="text-white/30 shrink-0" />
+          <span className="text-[10px] text-white/40 truncate">{party.institution}</span>
+        </div>
+      </div>
+      <span className="text-[9px] text-white/25 uppercase tracking-widest ml-auto shrink-0">{label}</span>
+    </div>
+  );
+}
+
 function ProposeSlots({ meetingId, onProposed }: { meetingId: string; onProposed: () => void }) {
   const [slots, setSlots] = useState([{ date: '', time: '' }, { date: '', time: '' }]);
+  const [meetingLink, setMeetingLink] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [linkError, setLinkError] = useState('');
 
   const updateSlot = (i: number, field: 'date' | 'time', val: string) =>
     setSlots(prev => prev.map((s, idx) => idx === i ? { ...s, [field]: val } : s));
@@ -34,12 +105,18 @@ function ProposeSlots({ meetingId, onProposed }: { meetingId: string; onProposed
   const handleSubmit = async () => {
     const valid = slots.filter(s => s.date && s.time);
     if (valid.length === 0) return;
+
+    if (meetingLink && !meetingLink.startsWith('http')) {
+      setLinkError('Link must start with http:// or https://');
+      return;
+    }
+    setLinkError('');
     setSubmitting(true);
     try {
-      await meetingsApi.proposeSlots(meetingId, valid);
+      await meetingsApi.proposeSlots(meetingId, valid, meetingLink || undefined);
       onProposed();
     } catch {
-      // silent — will refresh on next load
+      // silent refresh on next load
     } finally {
       setSubmitting(false);
     }
@@ -58,21 +135,34 @@ function ProposeSlots({ meetingId, onProposed }: { meetingId: string; onProposed
           <input type="time" value={s.time} onChange={e => updateSlot(i, 'time', e.target.value)} className={inputCls} />
         </div>
       ))}
-      <div className="flex gap-2 pt-1">
-        {slots.length < 3 && (
-          <button onClick={addSlot} className="flex items-center gap-1.5 px-3 py-2 bg-white/5 text-white/40 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors border border-white/10">
-            <Plus size={11} /> Add Slot
-          </button>
-        )}
-        <button
-          onClick={handleSubmit}
-          disabled={!hasValid || submitting}
-          className="flex-1 py-2 bg-primary text-on-primary rounded text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-1.5"
-        >
-          {submitting ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-          Send Slots
+      {slots.length < 3 && (
+        <button onClick={addSlot} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 text-white/40 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors border border-white/10">
+          <Plus size={11} /> Add Slot
         </button>
+      )}
+
+      <div className="pt-1 space-y-1">
+        <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold flex items-center gap-1.5">
+          <Video size={11} /> Meeting Link <span className="text-white/25 normal-case tracking-normal font-normal">(optional — share now or later)</span>
+        </p>
+        <input
+          type="url"
+          value={meetingLink}
+          onChange={e => { setMeetingLink(e.target.value); setLinkError(''); }}
+          placeholder="https://zoom.us/j/... or meet.google.com/..."
+          className="w-full bg-white/5 border border-white/10 rounded px-3 py-2 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-primary/50 transition-colors"
+        />
+        {linkError && <p className="text-red-400 text-[10px]">{linkError}</p>}
       </div>
+
+      <button
+        onClick={handleSubmit}
+        disabled={!hasValid || submitting}
+        className="w-full py-2 bg-primary text-on-primary rounded text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-1.5"
+      >
+        {submitting ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+        Send Slots
+      </button>
     </div>
   );
 }
@@ -95,6 +185,7 @@ export default function MeetingsDashboard({ userId, refreshKey }: Props) {
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [acceptingNdaId, setAcceptingNdaId] = useState<string | null>(null);
   const [selectedSlots, setSelectedSlots] = useState<Record<string, string>>({});
+  const [openChatId, setOpenChatId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -147,13 +238,19 @@ export default function MeetingsDashboard({ userId, refreshKey }: Props) {
   if (loading) {
     return (
       <div className="space-y-3">
-        {[1, 2].map(i => <div key={i} className="h-16 bg-white/5 rounded-lg animate-pulse" />)}
+        {[1, 2].map(i => <div key={i} className="h-20 bg-white/5 rounded-lg animate-pulse" />)}
       </div>
     );
   }
 
   if (meetingList.length === 0) {
-    return <p className="text-white/30 text-sm">No meeting requests yet.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center py-8 text-center">
+        <Users size={32} className="text-white/10 mb-3" />
+        <p className="text-white/30 text-sm">No meeting requests yet.</p>
+        <p className="text-white/20 text-xs mt-1">Express interest in a post to start collaborating.</p>
+      </div>
+    );
   }
 
   return (
@@ -161,25 +258,37 @@ export default function MeetingsDashboard({ userId, refreshKey }: Props) {
       {meetingList.map(m => {
         const { label, cls } = statusLabel(m.status);
         const isRequester = m.requester.id === userId;
+        const otherParty = isRequester ? m.postOwner : m.requester;
+        const platform = PLATFORM_LABELS[m.post.preferredPlatform] ?? PLATFORM_LABELS.OTHER;
 
         return (
           <div key={m.id} className="glass-panel-elevated p-5 rounded-xl space-y-3">
-            {/* Post + status */}
+            {/* Post title + status badge */}
             <div className="flex justify-between items-start gap-3">
               <div className="min-w-0">
                 <p className="text-white font-semibold text-sm truncate">{m.post.title}</p>
-                <p className="text-white/40 text-[10px] uppercase tracking-widest mt-0.5">
-                  {isRequester ? `To: ${m.postOwner.name}` : `From: ${m.requester.name}`}
-                </p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-[10px] text-white/35 uppercase tracking-widest">{m.post.domain}</span>
+                  {m.post.city && <span className="text-[10px] text-white/25">· {m.post.city}</span>}
+                  <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${platform.color}`}>
+                    {platform.label}
+                  </span>
+                </div>
               </div>
               <span className={`shrink-0 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${cls}`}>
                 {label}
               </span>
             </div>
 
-            {/* PENDING — requester waits, owner proposes slots */}
+            {/* Who is who */}
+            <PartyCard
+              party={otherParty}
+              label={isRequester ? 'Post Owner' : 'Applicant'}
+            />
+
+            {/* ── NDA_PENDING — requester needs to sign */}
             {m.status === 'NDA_PENDING' && isRequester && (
-              <div className="space-y-3">
+              <div className="space-y-3 pt-1">
                 <p className="text-xs text-white/50 leading-relaxed">
                   Accept the platform NDA to convert this interest into a real meeting request.
                 </p>
@@ -199,18 +308,19 @@ export default function MeetingsDashboard({ userId, refreshKey }: Props) {
               </p>
             )}
 
+            {/* ── PENDING — requester waits, owner proposes slots */}
             {m.status === 'PENDING' && isRequester && (
               <p className="flex items-center gap-2 text-xs text-white/40">
-                <Clock size={13} /> Waiting for the post owner to propose time slots
+                <Clock size={13} /> Waiting for {m.postOwner.name} to propose time slots
               </p>
             )}
             {m.status === 'PENDING' && !isRequester && (
               <ProposeSlots meetingId={m.id} onProposed={load} />
             )}
 
-            {/* SLOTS_PROPOSED — requester picks one */}
+            {/* ── SLOTS_PROPOSED — requester picks a slot */}
             {m.status === 'SLOTS_PROPOSED' && m.proposedSlots && isRequester && (
-              <div className="space-y-2">
+              <div className="space-y-2 pt-1">
                 <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold">Select a time slot:</p>
                 {m.proposedSlots.map(s => {
                   const key = `${s.date}|${s.time}`;
@@ -248,23 +358,69 @@ export default function MeetingsDashboard({ userId, refreshKey }: Props) {
                 </div>
               </div>
             )}
-
-            {/* SLOTS_PROPOSED — owner sees slots they proposed */}
             {m.status === 'SLOTS_PROPOSED' && !isRequester && (
               <p className="flex items-center gap-2 text-xs text-white/40">
                 <Clock size={13} /> Waiting for {m.requester.name} to confirm a slot
               </p>
             )}
 
-            {/* CONFIRMED */}
+            {/* ── CONFIRMED */}
             {m.status === 'CONFIRMED' && m.confirmedSlot && (
-              <div className="flex items-center gap-2 text-clinical-green text-sm font-semibold">
-                <CheckCircle2 size={16} />
-                <span>Meeting scheduled — {m.confirmedSlot.date} at {m.confirmedSlot.time}</span>
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center gap-2 text-clinical-green text-sm font-semibold">
+                  <CheckCircle2 size={16} />
+                  <span>{m.confirmedSlot.date} at {m.confirmedSlot.time}</span>
+                </div>
+                {m.meetingLink ? (
+                  <a
+                    href={m.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2 bg-clinical-green/10 border border-clinical-green/20 rounded-lg text-clinical-green text-xs font-bold hover:bg-clinical-green/20 transition-colors"
+                  >
+                    <Video size={13} />
+                    Join Meeting
+                    <ExternalLink size={11} className="ml-auto opacity-60" />
+                  </a>
+                ) : (
+                  <p className="text-[10px] text-white/30 flex items-center gap-1.5">
+                    <Video size={11} />
+                    Meeting link not added yet — the host will share it before the call
+                  </p>
+                )}
+                <button
+                  onClick={() => setOpenChatId(openChatId === m.id ? null : m.id)}
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-clinical-green/20 text-clinical-green text-xs font-bold uppercase tracking-widest hover:bg-clinical-green/10 transition-colors"
+                >
+                  <MessageSquare size={12} />
+                  {openChatId === m.id ? 'Close Chat' : 'Open Chat'}
+                </button>
               </div>
             )}
 
-            {/* REJECTED */}
+            {/* ── Chat for non-confirmed (message request) */}
+            {(m.status === 'PENDING' || m.status === 'SLOTS_PROPOSED' || m.status === 'NDA_PENDING') && (
+              <div className="pt-1">
+                <button
+                  onClick={() => setOpenChatId(openChatId === m.id ? null : m.id)}
+                  className="flex items-center gap-1.5 text-[10px] text-white/30 hover:text-white/60 transition-colors font-bold uppercase tracking-widest"
+                >
+                  <MessageSquare size={11} />
+                  {openChatId === m.id ? 'Close Messages' : 'Send a Message'}
+                </button>
+              </div>
+            )}
+
+            {/* ── Chat window */}
+            {openChatId === m.id && (
+              <ChatWindow
+                meetingId={m.id}
+                otherPartyName={otherParty.name}
+                onClose={() => setOpenChatId(null)}
+              />
+            )}
+
+            {/* ── REJECTED */}
             {m.status === 'REJECTED' && (
               <div className="flex items-center gap-2 text-system-red/70 text-xs">
                 <XCircle size={14} />

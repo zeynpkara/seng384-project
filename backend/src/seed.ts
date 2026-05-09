@@ -25,7 +25,12 @@ async function main() {
 
   const doctor1 = await prisma.user.upsert({
     where: { email: 'doctor1@hacettepe.edu.tr' },
-    update: {},
+    update: {
+      bio: 'Cardiologist with 12 years of clinical experience at Hacettepe University Hospital. Focused on digital health innovations to improve early diagnosis of arrhythmias and heart failure.',
+      specialization: 'Interventional Cardiology, Arrhythmia Management, Digital Biomarkers',
+      education: 'MD — Hacettepe University Faculty of Medicine (2008)\nFellowship in Interventional Cardiology — Istanbul Heart Institute (2012)\nCertificate in Clinical AI — Johns Hopkins Online (2022)',
+      interests: 'AI-assisted ECG interpretation, wearable cardiac monitors, federated learning in clinical settings, real-world evidence studies',
+    },
     create: {
       email: 'doctor1@hacettepe.edu.tr',
       passwordHash: hash,
@@ -33,12 +38,21 @@ async function main() {
       name: 'Dr. Ayşe Kaya',
       institution: 'Hacettepe University',
       isVerified: true,
+      bio: 'Cardiologist with 12 years of clinical experience at Hacettepe University Hospital. Focused on digital health innovations to improve early diagnosis of arrhythmias and heart failure.',
+      specialization: 'Interventional Cardiology, Arrhythmia Management, Digital Biomarkers',
+      education: 'MD — Hacettepe University Faculty of Medicine (2008)\nFellowship in Interventional Cardiology — Istanbul Heart Institute (2012)\nCertificate in Clinical AI — Johns Hopkins Online (2022)',
+      interests: 'AI-assisted ECG interpretation, wearable cardiac monitors, federated learning in clinical settings, real-world evidence studies',
     },
   });
 
   const doctor2 = await prisma.user.upsert({
     where: { email: 'doctor2@istanbul.edu.tr' },
-    update: {},
+    update: {
+      bio: 'Ophthalmologist and researcher specializing in retinal diseases. Leading the diabetic retinopathy screening program at Istanbul University Hospital, exploring deep learning for early-stage detection.',
+      specialization: 'Medical Retina, Diabetic Eye Disease, Fundus Imaging',
+      education: 'MD — Istanbul University Cerrahpaşa Faculty of Medicine (2010)\nSpecialization in Ophthalmology — Istanbul Training Hospital (2015)\nMSc Medical Imaging — University of Edinburgh (2018)',
+      interests: 'Retinal image analysis, explainable AI in ophthalmology, population screening tools, transfer learning with limited clinical datasets',
+    },
     create: {
       email: 'doctor2@istanbul.edu.tr',
       passwordHash: hash,
@@ -46,12 +60,21 @@ async function main() {
       name: 'Dr. Mehmet Demir',
       institution: 'Istanbul University',
       isVerified: true,
+      bio: 'Ophthalmologist and researcher specializing in retinal diseases. Leading the diabetic retinopathy screening program at Istanbul University Hospital, exploring deep learning for early-stage detection.',
+      specialization: 'Medical Retina, Diabetic Eye Disease, Fundus Imaging',
+      education: 'MD — Istanbul University Cerrahpaşa Faculty of Medicine (2010)\nSpecialization in Ophthalmology — Istanbul Training Hospital (2015)\nMSc Medical Imaging — University of Edinburgh (2018)',
+      interests: 'Retinal image analysis, explainable AI in ophthalmology, population screening tools, transfer learning with limited clinical datasets',
     },
   });
 
   const eng1 = await prisma.user.upsert({
     where: { email: 'eng1@metu.edu.tr' },
-    update: {},
+    update: {
+      bio: 'ML engineer and PhD candidate at METU Computer Engineering. Building end-to-end biosignal processing pipelines. Passionate about translating research-grade AI into clinical-grade tools.',
+      specialization: 'Machine Learning, Signal Processing, Embedded Systems, MLOps',
+      education: 'BSc Computer Engineering — METU (2018)\nMSc Artificial Intelligence — METU (2020)\nPhD (ongoing) — Biomedical Signal Processing, METU',
+      interests: 'ECG/EEG deep learning, federated learning, real-time inference on edge devices, clinical AI validation frameworks',
+    },
     create: {
       email: 'eng1@metu.edu.tr',
       passwordHash: hash,
@@ -59,12 +82,21 @@ async function main() {
       name: 'Emre Yıldız',
       institution: 'METU',
       isVerified: true,
+      bio: 'ML engineer and PhD candidate at METU Computer Engineering. Building end-to-end biosignal processing pipelines. Passionate about translating research-grade AI into clinical-grade tools.',
+      specialization: 'Machine Learning, Signal Processing, Embedded Systems, MLOps',
+      education: 'BSc Computer Engineering — METU (2018)\nMSc Artificial Intelligence — METU (2020)\nPhD (ongoing) — Biomedical Signal Processing, METU',
+      interests: 'ECG/EEG deep learning, federated learning, real-time inference on edge devices, clinical AI validation frameworks',
     },
   });
 
   const eng2 = await prisma.user.upsert({
     where: { email: 'eng2@boun.edu.tr' },
-    update: {},
+    update: {
+      bio: 'Biomedical engineer specializing in medical device prototyping and computer vision for clinical imaging. 4 years experience building FDA-pathway-aware products at the intersection of hardware and AI.',
+      specialization: 'Computer Vision, Medical Device Design, RFID/IoT, Regulatory (FDA/CE)',
+      education: 'BSc Biomedical Engineering — Boğaziçi University (2017)\nMSc Bioengineering — ETH Zürich (2019)',
+      interests: 'Surgical robotics, OR workflow optimization, point-of-care diagnostics, regulatory science for AI/ML medical devices',
+    },
     create: {
       email: 'eng2@boun.edu.tr',
       passwordHash: hash,
@@ -72,6 +104,10 @@ async function main() {
       name: 'Selin Arslan',
       institution: 'Boğaziçi University',
       isVerified: true,
+      bio: 'Biomedical engineer specializing in medical device prototyping and computer vision for clinical imaging. 4 years experience building FDA-pathway-aware products at the intersection of hardware and AI.',
+      specialization: 'Computer Vision, Medical Device Design, RFID/IoT, Regulatory (FDA/CE)',
+      education: 'BSc Biomedical Engineering — Boğaziçi University (2017)\nMSc Bioengineering — ETH Zürich (2019)',
+      interests: 'Surgical robotics, OR workflow optimization, point-of-care diagnostics, regulatory science for AI/ML medical devices',
     },
   });
 
@@ -205,13 +241,40 @@ async function main() {
       postId: post1.id,
       requesterId: eng1.id,
       postOwnerId: doctor1.id,
-      status: 'PENDING',
+      status: 'CONFIRMED',
       message: 'I have experience with ECG signal processing. Would love to help.',
-      ndaAccepted: false,
+      ndaAccepted: true,
+      ndaAcceptedAt: new Date('2026-04-15'),
+      confirmedSlot: { date: '2026-05-12', time: '10:00' },
+      meetingLink: 'https://meet.google.com/demo-ecg-meeting',
     },
   });
 
+  // Seed: a few chat messages for the CONFIRMED meetings so chat loads with content
+  const existingMsg1 = await prisma.message.findFirst({ where: { meetingId: 'seed-meeting-1' } });
+  if (!existingMsg1) {
+    await prisma.message.createMany({
+      data: [
+        { meetingId: 'seed-meeting-1', senderId: doctor2.id, content: 'Merhaba, projeye katılım için heyecanlıyım!' },
+        { meetingId: 'seed-meeting-1', senderId: eng2.id, content: 'Ben de! Retinal görüntü veri setini inceleme fırsatım oldu, çok değerli bir çalışma.' },
+        { meetingId: 'seed-meeting-1', senderId: doctor2.id, content: 'Toplantıdan önce metodoloji hakkında konuşabilir miyiz?' },
+      ],
+    });
+  }
+
+  const existingMsg2 = await prisma.message.findFirst({ where: { meetingId: 'seed-meeting-2' } });
+  if (!existingMsg2) {
+    await prisma.message.createMany({
+      data: [
+        { meetingId: 'seed-meeting-2', senderId: eng1.id, content: 'ECG veri setinizin formatı nedir, EDF mi yoksa CSV mi?' },
+        { meetingId: 'seed-meeting-2', senderId: doctor1.id, content: 'HL7 aECG formatında, ancak CSV\'ye dönüştürebiliriz. 12 derivasyon, 500 Hz örnekleme.' },
+        { meetingId: 'seed-meeting-2', senderId: eng1.id, content: 'Mükemmel. İlk model prototipini 2 haftada çıkarabilirim.' },
+      ],
+    });
+  }
+
   console.log('✓ Meeting requests created (2)');
+  console.log('✓ Seed messages created');
   console.log('\n✅ Seed complete!');
   console.log('  admin@metu.edu.tr        / Demo1234!  (ADMIN)');
   console.log('  doctor1@hacettepe.edu.tr / Demo1234!  (HEALTHCARE)');
